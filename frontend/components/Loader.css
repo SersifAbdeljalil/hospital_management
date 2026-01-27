@@ -1,0 +1,211 @@
+/* ============================================
+   LOADER COMPONENT - MODERN MEDICAL DESIGN
+   ============================================ */
+
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.loader-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(var(--blur-sm));
+  z-index: var(--z-modal);
+}
+
+/* ========== LOADER TEXT ========== */
+
+.loader-text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+/* ========== SPINNER VARIANT ========== */
+
+.loader-spinner {
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ========== DOTS VARIANT ========== */
+
+.loader-dots {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.loader-dots span {
+  width: 12px;
+  height: 12px;
+  background: var(--primary-500);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loader-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loader-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+/* ========== PULSE VARIANT ========== */
+
+.loader-pulse {
+  background: var(--primary-500);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ========== MEDICAL VARIANT ========== */
+
+.loader-medical {
+  position: relative;
+}
+
+.loader-cross {
+  position: relative;
+  animation: rotate 2s linear infinite;
+}
+
+.cross-vertical,
+.cross-horizontal {
+  position: absolute;
+  background: var(--primary-500);
+  border-radius: var(--radius-sm);
+}
+
+.cross-vertical {
+  width: 8px;
+  height: 40px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.cross-horizontal {
+  width: 40px;
+  height: 8px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ========== SIZES ========== */
+
+/* Spinner */
+.loader-sm .loader-spinner {
+  width: 24px;
+  height: 24px;
+  border-width: 3px;
+}
+
+.loader-base .loader-spinner {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+}
+
+.loader-lg .loader-spinner {
+  width: 56px;
+  height: 56px;
+  border-width: 5px;
+}
+
+/* Pulse */
+.loader-sm .loader-pulse {
+  width: 24px;
+  height: 24px;
+}
+
+.loader-base .loader-pulse {
+  width: 40px;
+  height: 40px;
+}
+
+.loader-lg .loader-pulse {
+  width: 56px;
+  height: 56px;
+}
+
+/* Dots */
+.loader-sm .loader-dots span {
+  width: 8px;
+  height: 8px;
+}
+
+.loader-base .loader-dots span {
+  width: 12px;
+  height: 12px;
+}
+
+.loader-lg .loader-dots span {
+  width: 16px;
+  height: 16px;
+}
+
+/* Medical */
+.loader-sm .loader-medical {
+  width: 24px;
+  height: 24px;
+}
+
+.loader-base .loader-medical {
+  width: 40px;
+  height: 40px;
+}
+
+.loader-lg .loader-medical {
+  width: 56px;
+  height: 56px;
+}
+
+/* ========== ANIMATIONS ========== */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

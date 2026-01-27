@@ -1,0 +1,233 @@
+/* ============================================
+   INPUT COMPONENT - MODERN MEDICAL DESIGN
+   ============================================ */
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  position: relative;
+}
+
+.input-full {
+  width: 100%;
+}
+
+/* ========== LABEL ========== */
+
+.input-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+  display: block;
+}
+
+.input-required {
+  color: var(--danger);
+  margin-left: var(--space-1);
+}
+
+/* ========== WRAPPER ========== */
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* ========== INPUT FIELD ========== */
+
+.input-field {
+  width: 100%;
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background-color: var(--white);
+  border: var(--border-width) solid var(--border-base);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: var(--transition-all);
+  box-shadow: var(--shadow-xs);
+}
+
+.input-field::placeholder {
+  color: var(--text-muted);
+}
+
+.input-field:focus {
+  border-color: var(--primary-500);
+  box-shadow: var(--shadow-focus);
+  background-color: var(--white);
+}
+
+.input-field:disabled {
+  background-color: var(--bg-disabled);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ========== SIZES ========== */
+
+.input-sm .input-field {
+  height: var(--input-height-sm);
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-base);
+}
+
+.input-base .input-field {
+  height: var(--input-height-base);
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  border-radius: var(--radius-md);
+}
+
+.input-lg .input-field {
+  height: var(--input-height-lg);
+  padding: 0 var(--space-5);
+  font-size: var(--text-lg);
+  border-radius: var(--radius-lg);
+}
+
+/* ========== WITH ICONS ========== */
+
+.input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: var(--transition-colors);
+}
+
+.input-icon svg {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.input-icon-left {
+  left: var(--space-3);
+}
+
+.input-icon-right {
+  right: var(--space-3);
+}
+
+.input-focused .input-icon {
+  color: var(--primary-500);
+}
+
+.input-field.has-icon-left {
+  padding-left: var(--space-10);
+}
+
+.input-field.has-icon-right {
+  padding-right: var(--space-10);
+}
+
+.input-field.has-password-toggle {
+  padding-right: var(--space-12);
+}
+
+/* ========== PASSWORD TOGGLE ========== */
+
+.input-password-toggle {
+  position: absolute;
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-colors);
+  border-radius: var(--radius-sm);
+}
+
+.input-password-toggle:hover {
+  color: var(--primary-500);
+  background-color: var(--primary-50);
+}
+
+.input-password-toggle:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* ========== STATES ========== */
+
+.input-error .input-field {
+  border-color: var(--danger);
+}
+
+.input-error .input-field:focus {
+  box-shadow: var(--shadow-focus-error);
+}
+
+.input-error .input-icon {
+  color: var(--danger);
+}
+
+.input-disabled {
+  opacity: 0.6;
+}
+
+/* ========== MESSAGES ========== */
+
+.input-message {
+  font-size: var(--text-sm);
+  margin-top: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.input-message-error {
+  color: var(--danger);
+}
+
+.input-message-helper {
+  color: var(--text-muted);
+}
+
+/* ========== TEXTAREA ========== */
+
+textarea.input-field {
+  min-height: 120px;
+  padding: var(--space-3) var(--space-4);
+  resize: vertical;
+  line-height: var(--leading-relaxed);
+}
+
+/* ========== SELECT ========== */
+
+select.input-field {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23757575' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: var(--space-10);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .input-base .input-field {
+    height: var(--input-height-sm);
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+  }
+  
+  .input-lg .input-field {
+    height: var(--input-height-base);
+    padding: 0 var(--space-4);
+    font-size: var(--text-base);
+  }
+}

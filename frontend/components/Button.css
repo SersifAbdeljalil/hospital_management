@@ -1,0 +1,279 @@
+/* ============================================
+   BUTTON COMPONENT - MODERN MEDICAL DESIGN
+   ============================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-primary);
+  font-weight: var(--font-medium);
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: var(--border-width) solid transparent;
+  transition: var(--transition-all);
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+
+/* ========== VARIANTS ========== */
+
+/* Primary - Bleu médical */
+.btn-primary {
+  background: var(--gradient-primary);
+  color: var(--white);
+  border-color: var(--primary-600);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-700);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled) {
+  background: var(--primary-800);
+  transform: translateY(0);
+}
+
+/* Secondary - Vert santé */
+.btn-secondary {
+  background: var(--gradient-secondary);
+  color: var(--white);
+  border-color: var(--secondary-600);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--secondary-700);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active:not(:disabled) {
+  background: var(--secondary-800);
+  transform: translateY(0);
+}
+
+/* Outline - Bordure uniquement */
+.btn-outline {
+  background: transparent;
+  color: var(--primary-600);
+  border-color: var(--primary-600);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--primary-50);
+  border-color: var(--primary-700);
+  color: var(--primary-700);
+}
+
+/* Ghost - Transparent */
+.btn-ghost {
+  background: transparent;
+  color: var(--primary-600);
+  border-color: transparent;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--primary-50);
+}
+
+/* Danger - Rouge */
+.btn-danger {
+  background: var(--danger);
+  color: var(--white);
+  border-color: var(--danger-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Success - Vert */
+.btn-success {
+  background: var(--success);
+  color: var(--white);
+  border-color: var(--success-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: var(--success-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Warning - Orange */
+.btn-warning {
+  background: var(--warning);
+  color: var(--white);
+  border-color: var(--warning-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--warning-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Light - Gris clair */
+.btn-light {
+  background: var(--white);
+  color: var(--text-primary);
+  border-color: var(--border-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-light:hover:not(:disabled) {
+  background: var(--gray-50);
+  border-color: var(--border-strong);
+}
+
+/* Link - Style lien */
+.btn-link {
+  background: transparent;
+  color: var(--primary-600);
+  border-color: transparent;
+  text-decoration: underline;
+  box-shadow: none;
+}
+
+.btn-link:hover:not(:disabled) {
+  color: var(--primary-700);
+  text-decoration: none;
+}
+
+/* ========== SIZES ========== */
+
+.btn-sm {
+  height: var(--button-height-sm);
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-base);
+}
+
+.btn-base {
+  height: var(--button-height-base);
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  border-radius: var(--radius-md);
+}
+
+.btn-lg {
+  height: var(--button-height-lg);
+  padding: 0 var(--space-6);
+  font-size: var(--text-lg);
+  border-radius: var(--radius-lg);
+}
+
+.btn-xl {
+  height: var(--button-height-xl);
+  padding: 0 var(--space-8);
+  font-size: var(--text-xl);
+  border-radius: var(--radius-xl);
+  font-weight: var(--font-semibold);
+}
+
+/* ========== STATES ========== */
+
+.btn-full {
+  width: 100%;
+}
+
+.btn:disabled,
+.btn-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.btn-loading .btn-text {
+  opacity: 0;
+}
+
+/* ========== ICONS ========== */
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon svg {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+/* ========== LOADING SPINNER ========== */
+
+.btn-spinner {
+  position: absolute;
+  width: 1.2em;
+  height: 1.2em;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========== RIPPLE EFFECT ========== */
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .btn-base {
+    height: var(--button-height-sm);
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+  }
+  
+  .btn-lg {
+    height: var(--button-height-base);
+    padding: 0 var(--space-4);
+    font-size: var(--text-base);
+  }
+}

@@ -1,0 +1,401 @@
+/* ============================================
+   HOSPITAL MANAGEMENT SYSTEM - DESIGN SYSTEM
+   Style: Moderne, Médical, Professionnel
+   Palette: Sigmax Medical
+   ============================================ */
+
+:root {
+  /* ========== COULEURS PRINCIPALES - SIGMAX MEDICAL ========== */
+  
+  /* Bleu médical - Confiance et professionnalisme */
+  --primary-color: #1565C0;
+  --primary-50: #E3F2FD;
+  --primary-100: #BBDEFB;
+  --primary-200: #90CAF9;
+  --primary-300: #64B5F6;
+  --primary-400: #42A5F5;
+  --primary-500: #1565C0;
+  --primary-600: #1E88E5;
+  --primary-700: #1976D2;
+  --primary-800: #1565C0;
+  --primary-900: #0D47A1;
+  
+  /* Vert médical - Santé et guérison */
+  --secondary-color: #388E3C;
+  --secondary-50: #E8F5E9;
+  --secondary-100: #C8E6C9;
+  --secondary-200: #A5D6A7;
+  --secondary-300: #81C784;
+  --secondary-400: #66BB6A;
+  --secondary-500: #388E3C;
+  --secondary-600: #43A047;
+  --secondary-700: #388E3C;
+  --secondary-800: #2E7D32;
+  --secondary-900: #1B5E20;
+  
+  /* Teal - Accent moderne */
+  --accent-color: #4DB6AC;
+  --accent-50: #E0F2F1;
+  --accent-100: #B2DFDB;
+  --accent-200: #80CBC4;
+  --accent-300: #4DB6AC;
+  --accent-400: #26A69A;
+  --accent-500: #009688;
+  --accent-600: #00897B;
+  --accent-700: #00796B;
+  --accent-800: #00695C;
+  --accent-900: #004D40;
+  
+  /* ========== COULEURS NEUTRES - GRIS MODERNES ========== */
+  --white: #FFFFFF;
+  --black: #000000;
+  
+  --gray-50: #FAFAFA;
+  --gray-100: #F5F5F5;
+  --gray-200: #EEEEEE;
+  --gray-300: #E0E0E0;
+  --gray-400: #BDBDBD;
+  --gray-500: #9E9E9E;
+  --gray-600: #757575;
+  --gray-700: #616161;
+  --gray-800: #424242;
+  --gray-900: #263238;
+  
+  /* ========== COULEURS SÉMANTIQUES ========== */
+  
+  /* Succès - Vert */
+  --success: #388E3C;
+  --success-light: #66BB6A;
+  --success-dark: #2E7D32;
+  --success-bg: #E8F5E9;
+  --success-border: #A5D6A7;
+  
+  /* Avertissement - Orange */
+  --warning: #F57C00;
+  --warning-light: #FFB74D;
+  --warning-dark: #E65100;
+  --warning-bg: #FFF3E0;
+  --warning-border: #FFE082;
+  
+  /* Erreur - Rouge */
+  --danger: #D32F2F;
+  --danger-light: #EF5350;
+  --danger-dark: #C62828;
+  --danger-bg: #FFEBEE;
+  --danger-border: #EF9A9A;
+  
+  /* Information - Bleu */
+  --info: #1976D2;
+  --info-light: #64B5F6;
+  --info-dark: #1565C0;
+  --info-bg: #E3F2FD;
+  --info-border: #90CAF9;
+  
+  /* ========== COULEURS PAR RÔLE - IDENTITÉ VISUELLE ========== */
+  
+  /* Administrateur - Violet royal */
+  --role-admin: #6A1B9A;
+  --role-admin-light: #AB47BC;
+  --role-admin-bg: #F3E5F5;
+  
+  /* Médecin - Bleu professionnel */
+  --role-doctor: #1565C0;
+  --role-doctor-light: #42A5F5;
+  --role-doctor-bg: #E3F2FD;
+  
+  /* Infirmier - Vert santé */
+  --role-nurse: #388E3C;
+  --role-nurse-light: #66BB6A;
+  --role-nurse-bg: #E8F5E9;
+  
+  /* Réceptionniste - Orange accueil */
+  --role-receptionist: #F57C00;
+  --role-receptionist-light: #FFB74D;
+  --role-receptionist-bg: #FFF3E0;
+  
+  /* Patient - Teal calme */
+  --role-patient: #00897B;
+  --role-patient-light: #4DB6AC;
+  --role-patient-bg: #E0F2F1;
+  
+  /* ========== STATUTS DES RENDEZ-VOUS ========== */
+  --status-planifie: #2196F3;
+  --status-planifie-bg: #E3F2FD;
+  
+  --status-confirme: #388E3C;
+  --status-confirme-bg: #E8F5E9;
+  
+  --status-en-cours: #FF9800;
+  --status-en-cours-bg: #FFF3E0;
+  
+  --status-termine: #4CAF50;
+  --status-termine-bg: #E8F5E9;
+  
+  --status-annule: #F44336;
+  --status-annule-bg: #FFEBEE;
+  
+  --status-non-presente: #9E9E9E;
+  --status-non-presente-bg: #F5F5F5;
+  
+  /* ========== TYPOGRAPHIE MODERNE ========== */
+  --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-secondary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', monospace;
+  
+  /* Échelle typographique - Ratio 1.25 (Major Third) */
+  --text-xs: 0.64rem;      /* 10.24px */
+  --text-sm: 0.8rem;       /* 12.8px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.25rem;      /* 20px */
+  --text-xl: 1.563rem;     /* 25px */
+  --text-2xl: 1.953rem;    /* 31.25px */
+  --text-3xl: 2.441rem;    /* 39px */
+  --text-4xl: 3.052rem;    /* 48.83px */
+  --text-5xl: 3.815rem;    /* 61px */
+  
+  /* Poids de police */
+  --font-thin: 100;
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  --font-black: 900;
+  
+  /* Hauteur de ligne */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+  
+  /* Espacement des lettres */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+  
+  /* ========== ESPACEMENTS - SYSTÈME 8PT ========== */
+  --space-0: 0;
+  --space-1: 0.25rem;      /* 4px */
+  --space-2: 0.5rem;       /* 8px */
+  --space-3: 0.75rem;      /* 12px */
+  --space-4: 1rem;         /* 16px */
+  --space-5: 1.25rem;      /* 20px */
+  --space-6: 1.5rem;       /* 24px */
+  --space-8: 2rem;         /* 32px */
+  --space-10: 2.5rem;      /* 40px */
+  --space-12: 3rem;        /* 48px */
+  --space-16: 4rem;        /* 64px */
+  --space-20: 5rem;        /* 80px */
+  --space-24: 6rem;        /* 96px */
+  
+  /* ========== BORDURES MODERNES ========== */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;    /* 4px */
+  --radius-base: 0.5rem;   /* 8px */
+  --radius-md: 0.75rem;    /* 12px */
+  --radius-lg: 1rem;       /* 16px */
+  --radius-xl: 1.5rem;     /* 24px */
+  --radius-2xl: 2rem;      /* 32px */
+  --radius-full: 9999px;   /* Cercle complet */
+  
+  --border-width: 1px;
+  --border-width-2: 2px;
+  --border-width-4: 4px;
+  --border-width-8: 8px;
+  
+  /* ========== OMBRES SOPHISTIQUÉES ========== */
+  
+  /* Ombres douces - Material Design 3.0 */
+  --shadow-xs: 0 1px 2px 0 rgba(38, 50, 56, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(38, 50, 56, 0.08), 0 1px 2px -1px rgba(38, 50, 56, 0.08);
+  --shadow-base: 0 4px 6px -1px rgba(38, 50, 56, 0.08), 0 2px 4px -2px rgba(38, 50, 56, 0.08);
+  --shadow-md: 0 10px 15px -3px rgba(38, 50, 56, 0.08), 0 4px 6px -4px rgba(38, 50, 56, 0.08);
+  --shadow-lg: 0 20px 25px -5px rgba(38, 50, 56, 0.08), 0 8px 10px -6px rgba(38, 50, 56, 0.08);
+  --shadow-xl: 0 25px 50px -12px rgba(38, 50, 56, 0.15);
+  --shadow-2xl: 0 35px 60px -15px rgba(38, 50, 56, 0.2);
+  
+  /* Ombres colorées pour les cartes de rôles */
+  --shadow-admin: 0 4px 20px rgba(106, 27, 154, 0.15);
+  --shadow-doctor: 0 4px 20px rgba(21, 101, 192, 0.15);
+  --shadow-nurse: 0 4px 20px rgba(56, 142, 60, 0.15);
+  --shadow-patient: 0 4px 20px rgba(77, 182, 172, 0.15);
+  
+  /* Ombre intérieure */
+  --shadow-inner: inset 0 2px 4px 0 rgba(38, 50, 56, 0.06);
+  
+  /* Ombre pour focus */
+  --shadow-focus: 0 0 0 3px rgba(21, 101, 192, 0.2);
+  --shadow-focus-error: 0 0 0 3px rgba(211, 47, 47, 0.2);
+  --shadow-focus-success: 0 0 0 3px rgba(56, 142, 60, 0.2);
+  
+  /* ========== TRANSITIONS FLUIDES ========== */
+  --transition-fastest: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-faster: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Transitions spécifiques */
+  --transition-all: all var(--transition-base);
+  --transition-colors: background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base), fill var(--transition-base), stroke var(--transition-base);
+  --transition-opacity: opacity var(--transition-base);
+  --transition-shadow: box-shadow var(--transition-base);
+  --transition-transform: transform var(--transition-base);
+  
+  /* Cubic bezier personnalisés */
+  --ease-in-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-bounce: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  
+  /* ========== LAYOUT - DIMENSIONS ========== */
+  
+  /* Sidebar médicale */
+  --sidebar-width: 280px;
+  --sidebar-collapsed: 72px;
+  --sidebar-transition: width var(--transition-base);
+  
+  /* Header */
+  --header-height: 72px;
+  --header-mobile: 64px;
+  
+  /* Container */
+  --container-xs: 640px;
+  --container-sm: 768px;
+  --container-md: 1024px;
+  --container-lg: 1280px;
+  --container-xl: 1536px;
+  --container-2xl: 1792px;
+  
+  /* Largeur de contenu */
+  --content-max-width: 1400px;
+  --form-max-width: 600px;
+  --modal-sm: 400px;
+  --modal-md: 600px;
+  --modal-lg: 800px;
+  --modal-xl: 1140px;
+  
+  /* ========== COMPOSANTS - HAUTEURS ========== */
+  --input-height-sm: 36px;
+  --input-height-base: 44px;
+  --input-height-lg: 52px;
+  
+  --button-height-sm: 32px;
+  --button-height-base: 40px;
+  --button-height-lg: 48px;
+  --button-height-xl: 56px;
+  
+  /* ========== Z-INDEX - HIÉRARCHIE ========== */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-sidebar: 1250;
+  --z-header: 1300;
+  --z-modal-backdrop: 1400;
+  --z-modal: 1500;
+  --z-popover: 1600;
+  --z-tooltip: 1700;
+  --z-notification: 1800;
+  --z-maximum: 9999;
+  
+  /* ========== BACKGROUNDS ========== */
+  --bg-app: var(--gray-50);
+  --bg-surface: var(--white);
+  --bg-elevated: var(--white);
+  --bg-overlay: rgba(38, 50, 56, 0.6);
+  --bg-disabled: var(--gray-100);
+  --bg-hover: var(--gray-100);
+  --bg-active: var(--gray-200);
+  
+  /* Dégradés médicaux modernes */
+  --gradient-primary: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--secondary-500) 0%, var(--secondary-700) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--accent-400) 0%, var(--accent-600) 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  
+  /* ========== TEXTE ========== */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-700);
+  --text-tertiary: var(--gray-600);
+  --text-muted: var(--gray-500);
+  --text-disabled: var(--gray-400);
+  --text-inverse: var(--white);
+  --text-link: var(--primary-600);
+  --text-link-hover: var(--primary-700);
+  
+  /* ========== BORDURES ========== */
+  --border-light: var(--gray-200);
+  --border-base: var(--gray-300);
+  --border-strong: var(--gray-400);
+  --border-inverse: rgba(255, 255, 255, 0.2);
+  
+  /* ========== OPACITÉS ========== */
+  --opacity-0: 0;
+  --opacity-10: 0.1;
+  --opacity-20: 0.2;
+  --opacity-30: 0.3;
+  --opacity-40: 0.4;
+  --opacity-50: 0.5;
+  --opacity-60: 0.6;
+  --opacity-70: 0.7;
+  --opacity-80: 0.8;
+  --opacity-90: 0.9;
+  --opacity-100: 1;
+  
+  /* ========== BACKDROP BLUR ========== */
+  --blur-none: 0;
+  --blur-sm: 4px;
+  --blur-base: 8px;
+  --blur-md: 12px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  --blur-2xl: 40px;
+  --blur-3xl: 64px;
+}
+
+/* ========== MODE SOMBRE MÉDICAL ========== */
+[data-theme="dark"] {
+  /* Backgrounds sombres */
+  --bg-app: #0A0E27;
+  --bg-surface: #141B2D;
+  --bg-elevated: #1F2937;
+  --bg-hover: #1F2937;
+  --bg-active: #374151;
+  
+  /* Texte inversé */
+  --text-primary: var(--gray-50);
+  --text-secondary: var(--gray-300);
+  --text-tertiary: var(--gray-400);
+  --text-muted: var(--gray-500);
+  
+  /* Bordures sombres */
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-base: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  
+  /* Ombres sombres */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-base: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  
+  /* Ajuster les couleurs pour le mode sombre */
+  --primary-500: #42A5F5;
+  --secondary-500: #66BB6A;
+  --accent-400: #80CBC4;
+}
+
+/* ========== BREAKPOINTS (Media Queries) ========== */
+/* xs: 0px - 639px (mobile portrait) */
+/* sm: 640px - 767px (mobile landscape) */
+/* md: 768px - 1023px (tablette) */
+/* lg: 1024px - 1279px (desktop) */
+/* xl: 1280px - 1535px (desktop large) */
+/* 2xl: 1536px+ (desktop extra large) */

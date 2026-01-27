@@ -1,0 +1,172 @@
+/* ============================================
+   TABLE COMPONENT - MODERN MEDICAL DESIGN
+   ============================================ */
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+/* ========== HEADER ========== */
+
+.table thead {
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--border-base);
+}
+
+.table th {
+  padding: var(--space-4) var(--space-4);
+  text-align: left;
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+}
+
+/* ========== BODY ========== */
+
+.table tbody tr {
+  border-bottom: var(--border-width) solid var(--border-light);
+  transition: var(--transition-colors);
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table td {
+  padding: var(--space-4) var(--space-4);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+/* ========== VARIANTS ========== */
+
+.table-striped tbody tr:nth-child(even) {
+  background-color: var(--gray-50);
+}
+
+.table-hoverable tbody tr:hover {
+  background-color: var(--primary-50);
+}
+
+.table-bordered {
+  border: var(--border-width) solid var(--border-base);
+}
+
+.table-bordered th,
+.table-bordered td {
+  border-right: var(--border-width) solid var(--border-light);
+}
+
+.table-bordered th:last-child,
+.table-bordered td:last-child {
+  border-right: none;
+}
+
+/* ========== CLICKABLE ROWS ========== */
+
+.table-row-clickable {
+  cursor: pointer;
+}
+
+.table-row-clickable:hover {
+  background-color: var(--primary-50);
+}
+
+/* ========== LOADING STATE ========== */
+
+.table-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.table-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: var(--space-4);
+}
+
+.table-loading p {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ========== EMPTY STATE ========== */
+
+.table-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.table-empty svg {
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+}
+
+.table-empty p {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .table {
+    font-size: var(--text-xs);
+  }
+  
+  .table th,
+  .table td {
+    padding: var(--space-3) var(--space-2);
+  }
+  
+  .table-container {
+    border-radius: var(--radius-md);
+  }
+}
+
+/* ========== SCROLLBAR ========== */
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: var(--radius-full);
+}
