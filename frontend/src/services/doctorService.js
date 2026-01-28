@@ -69,6 +69,37 @@ const doctorService = {
     } catch (error) {
       throw error.response?.data || { message: 'Erreur réseau' };
     }
+  },
+
+  // ⭐⭐⭐ NOUVELLES FONCTIONS - UPLOAD PHOTO ⭐⭐⭐
+
+  // Upload photo de profil
+  uploadProfilePhoto: async (file) => {
+    try {
+      // Créer un FormData pour envoyer le fichier
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const response = await api.post('/doctors/profile/photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Erreur lors de l\'upload de la photo' };
+    }
+  },
+
+  // Supprimer photo de profil
+  deleteProfilePhoto: async () => {
+    try {
+      const response = await api.delete('/doctors/profile/photo');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Erreur lors de la suppression de la photo' };
+    }
   }
 };
 

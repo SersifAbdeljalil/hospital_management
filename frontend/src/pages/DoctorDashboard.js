@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import dashboardService from '../services/dashboardService';
+import doctorService from '../services/doctorService';
+import notificationService from '../services/notificationservice';
 import useAuth from '../hooks/useAuth';
 import {
   MdLocalHospital,
   MdCalendarToday,
-  MdAttachMoney,
-  MdTrendingUp,
   MdAccessTime,
   MdCheckCircle,
   MdCancel,
@@ -16,35 +16,58 @@ import {
   MdChevronRight,
   MdRefresh,
   MdDashboard,
-  MdPeople,
-  MdSettings,
   MdLogout,
   MdMenu,
   MdClose,
   MdMedication,
-  MdEventNote,
-  MdAssignment
+  MdCameraAlt,
+  MdDelete,
+  MdNotifications,
+  MdNotificationsActive,
+  MdNotificationsNone,
+  MdDoneAll,
+  MdInfo
 } from 'react-icons/md';
 import { 
   FaUserMd, 
   FaStethoscope,
-  FaUserInjured,
-  FaClipboardList
+  FaUserInjured
 } from 'react-icons/fa';
 import './DoctorDashboard.css';
 
 const DoctorDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  
+  // États pour les notifications
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   useEffect(() => {
     fetchStats();
+    fetchUnreadCount();
+    
+    // Actualiser le compteur de notifications toutes les 30 secondes
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Charger les notifications quand le panneau s'ouvre
+  useEffect(() => {
+    if (showNotifications) {
+      fetchNotifications();
+    }
+  }, [showNotifications]);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -60,6 +83,131 @@ const DoctorDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Récupérer les notifications
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const response = await notificationService.getNotifications();
+      if (response.success) {
+        setNotifications(response.data);
+      }
+    } catch (error) {
+      console.error('Erreur fetchNotifications:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  // Récupérer le nombre de notifications non lues
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await notificationService.getUnreadCount();
+      if (response.success) {
+        setUnreadCount(response.count);
+      }
+    } catch (error) {
+      console.error('Erreur fetchUnreadCount:', error);
+    }
+  };
+
+  // Marquer une notification comme lue
+  const handleMarkAsRead = async (id) => {
+    try {
+      const response = await notificationService.markAsRead(id);
+      if (response.success) {
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif.id === id ? { ...notif, is_read: true } : notif
+          )
+        );
+        fetchUnreadCount();
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  // Marquer toutes les notifications comme lues
+  const handleMarkAllAsRead = async () => {
+    try {
+      const response = await notificationService.markAllAsRead();
+      if (response.success) {
+        setNotifications(prev =>
+          prev.map(notif => ({ ...notif, is_read: true }))
+        );
+        setUnreadCount(0);
+        toast.success('Toutes les notifications marquées comme lues');
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  // Supprimer une notification
+  const handleDeleteNotification = async (id) => {
+    try {
+      const response = await notificationService.deleteNotification(id);
+      if (response.success) {
+        setNotifications(prev => prev.filter(notif => notif.id !== id));
+        fetchUnreadCount();
+        toast.success('Notification supprimée');
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  // Obtenir l'icône de la notification
+  const getNotificationIcon = (type) => {
+    const icons = {
+      appointment_created: <MdCalendarToday />,
+      appointment_updated: <MdCalendarToday />,
+      appointment_cancelled: <MdCancel />,
+      appointment_reminder: <MdNotificationsActive />,
+      consultation_created: <MdCheckCircle />,
+      payment_received: <MdCheckCircle />,
+      message: <MdInfo />
+    };
+    return icons[type] || <MdNotifications />;
+  };
+
+  // Obtenir la couleur de la notification
+  const getNotificationColor = (type) => {
+    const colors = {
+      appointment_created: '#4CAF50',
+      appointment_updated: '#2196F3',
+      appointment_cancelled: '#F44336',
+      appointment_reminder: '#FF9800',
+      consultation_created: '#9C27B0',
+      payment_received: '#4CAF50',
+      message: '#2196F3'
+    };
+    return colors[type] || '#757575';
+  };
+
+  // Formater la date de notification
+  const formatNotificationDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'À l\'instant';
+    if (diffMins < 60) return `Il y a ${diffMins} min`;
+    if (diffHours < 24) return `Il y a ${diffHours}h`;
+    if (diffDays === 1) return 'Hier';
+    if (diffDays < 7) return `Il y a ${diffDays} jours`;
+    
+    return date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const handleRefresh = async () => {
@@ -83,6 +231,76 @@ const DoctorDashboard = () => {
     setSidebarOpen(false);
   };
 
+  const handlePhotoClick = () => {
+    setShowPhotoMenu(!showPhotoMenu);
+  };
+
+  const handleChangePhoto = () => {
+    fileInputRef.current?.click();
+    setShowPhotoMenu(false);
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Seules les images (JPEG, PNG, GIF) sont autorisées');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La taille de l\'image ne doit pas dépasser 5 MB');
+      return;
+    }
+
+    setUploadingPhoto(true);
+
+    try {
+      const response = await doctorService.uploadProfilePhoto(file);
+      
+      if (response.success) {
+        toast.success('Photo de profil mise à jour avec succès');
+        updateUser({
+          ...user,
+          photo_profil: response.data.photo_profil
+        });
+      }
+    } catch (error) {
+      console.error('Erreur upload photo:', error);
+      toast.error(error.message || 'Erreur lors du téléchargement de la photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')) {
+      return;
+    }
+
+    setShowPhotoMenu(false);
+    setUploadingPhoto(true);
+
+    try {
+      const response = await doctorService.deleteProfilePhoto();
+      
+      if (response.success) {
+        toast.success('Photo de profil supprimée avec succès');
+        updateUser({
+          ...user,
+          photo_profil: null
+        });
+      }
+    } catch (error) {
+      console.error('Erreur suppression photo:', error);
+      toast.error(error.message || 'Erreur lors de la suppression de la photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -93,7 +311,6 @@ const DoctorDashboard = () => {
     });
   };
 
-  // Navigation items
   const getNavigationItems = () => {
     return [
       {
@@ -121,6 +338,23 @@ const DoctorDashboard = () => {
     return (firstInitial + lastInitial).toUpperCase();
   };
 
+  const getPhotoUrl = () => {
+    if (user?.photo_profil) {
+      const baseURL = 'http://localhost:5000';
+      
+      if (user.photo_profil.startsWith('http')) {
+        return user.photo_profil;
+      }
+      
+      if (user.photo_profil.startsWith('/uploads')) {
+        return `${baseURL}${user.photo_profil}`;
+      }
+      
+      return `${baseURL}/uploads/profiles/${user.photo_profil}`;
+    }
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="dashboard-loading">
@@ -144,20 +378,24 @@ const DoctorDashboard = () => {
 
   return (
     <>
-      {/* Sidebar Toggle Button */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/gif"
+        onChange={handlePhotoUpload}
+        style={{ display: 'none' }}
+      />
+
       <button className="sidebar-toggle" onClick={toggleSidebar}>
         {sidebarOpen ? <MdClose /> : <MdMenu />}
       </button>
 
-      {/* Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`}
         onClick={closeSidebar}
       ></div>
 
-      {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        {/* Sidebar Header */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <div className="logo-icon">
@@ -170,10 +408,51 @@ const DoctorDashboard = () => {
           </div>
         </div>
 
-        {/* User Info */}
         <div className="sidebar-user">
           <div className="user-info">
-            <div className="user-avatar">{getUserInitials()}</div>
+            <div className="user-avatar-container">
+              {getPhotoUrl() ? (
+                <img 
+                  src={getPhotoUrl()} 
+                  alt="Photo de profil" 
+                  className="user-avatar-image"
+                  onClick={handlePhotoClick}
+                />
+              ) : (
+                <div className="user-avatar" onClick={handlePhotoClick}>
+                  {getUserInitials()}
+                </div>
+              )}
+              
+              <button 
+                className="change-photo-btn"
+                onClick={handlePhotoClick}
+                disabled={uploadingPhoto}
+                title="Modifier la photo"
+              >
+                {uploadingPhoto ? (
+                  <div className="spinner-small"></div>
+                ) : (
+                  <MdCameraAlt />
+                )}
+              </button>
+
+              {showPhotoMenu && (
+                <div className="photo-menu">
+                  <button onClick={handleChangePhoto} className="photo-menu-item">
+                    <MdCameraAlt />
+                    {getPhotoUrl() ? 'Changer la photo' : 'Ajouter une photo'}
+                  </button>
+                  {getPhotoUrl() && (
+                    <button onClick={handleDeletePhoto} className="photo-menu-item delete">
+                      <MdDelete />
+                      Supprimer la photo
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="user-details">
               <p className="user-name">
                 Dr. {user?.prenom} {user?.nom}
@@ -183,7 +462,6 @@ const DoctorDashboard = () => {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="sidebar-nav">
           {getNavigationItems().map((section, sectionIndex) => (
             <div key={sectionIndex} className="nav-section">
@@ -211,7 +489,6 @@ const DoctorDashboard = () => {
           ))}
         </nav>
 
-        {/* Sidebar Footer */}
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout}>
             <MdLogout />
@@ -220,24 +497,131 @@ const DoctorDashboard = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="main-content">
         <div className="doctor-dashboard">
-          {/* Header */}
+          {/* Header avec notifications */}
           <div className="dashboard-header">
             <div className="header-content">
               <h1>Mon Tableau de Bord</h1>
               <p>Bienvenue, Dr. {user?.prenom} {user?.nom}</p>
             </div>
-            <button 
-              className="refresh-btn"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <MdRefresh className={refreshing ? 'spinning' : ''} />
-              Actualiser
-            </button>
+            
+            <div className="header-actions">
+              {/* Bouton Notifications */}
+              <button 
+                className="notification-btn"
+                onClick={() => setShowNotifications(!showNotifications)}
+                title="Notifications"
+              >
+                {unreadCount > 0 ? <MdNotificationsActive /> : <MdNotifications />}
+                {unreadCount > 0 && (
+                  <span className="notification-badge">{unreadCount}</span>
+                )}
+              </button>
+
+              <button 
+                className="refresh-btn"
+                onClick={handleRefresh}
+                disabled={refreshing}
+              >
+                <MdRefresh className={refreshing ? 'spinning' : ''} />
+                Actualiser
+              </button>
+            </div>
           </div>
+
+          {/* Panneau de notifications */}
+          {showNotifications && (
+            <>
+              <div 
+                className="notifications-overlay" 
+                onClick={() => setShowNotifications(false)} 
+              />
+              <div className="notifications-panel">
+                <div className="notifications-header">
+                  <div className="header-title">
+                    <MdNotifications />
+                    <h2>Notifications</h2>
+                    {unreadCount > 0 && (
+                      <span className="unread-badge">{unreadCount}</span>
+                    )}
+                  </div>
+                  <div className="header-actions">
+                    {notifications.length > 0 && unreadCount > 0 && (
+                      <button
+                        className="btn-icon"
+                        onClick={handleMarkAllAsRead}
+                        title="Tout marquer comme lu"
+                      >
+                        <MdDoneAll />
+                      </button>
+                    )}
+                    <button
+                      className="btn-icon"
+                      onClick={() => setShowNotifications(false)}
+                      title="Fermer"
+                    >
+                      <MdClose />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="notifications-body">
+                  {loadingNotifications ? (
+                    <div className="notifications-loading">
+                      <div className="spinner"></div>
+                      <p>Chargement...</p>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="notifications-empty">
+                      <MdNotificationsNone className="empty-icon" />
+                      <p>Aucune notification</p>
+                    </div>
+                  ) : (
+                    <div className="notifications-list">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
+                          onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
+                        >
+                          <div
+                            className="notification-icon"
+                            style={{ backgroundColor: getNotificationColor(notification.type) }}
+                          >
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          
+                          <div className="notification-content">
+                            <h3 className="notification-title">{notification.title}</h3>
+                            <p className="notification-message">{notification.message}</p>
+                            <span className="notification-time">
+                              {formatNotificationDate(notification.created_at)}
+                            </span>
+                          </div>
+
+                          <button
+                            className="notification-delete"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNotification(notification.id);
+                            }}
+                            title="Supprimer"
+                          >
+                            <MdDelete />
+                          </button>
+
+                          {!notification.is_read && (
+                            <div className="unread-indicator"></div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Stats Cards */}
           <div className="stats-grid">
@@ -294,9 +678,8 @@ const DoctorDashboard = () => {
             </div>
           </div>
 
-          {/* Charts and Tables Row */}
+          {/* Reste du contenu du dashboard (inchangé) */}
           <div className="dashboard-row">
-            {/* Rendez-vous par statut */}
             <div className="dashboard-card">
               <div className="card-header">
                 <h2>Mes Rendez-vous par Statut</h2>
@@ -337,7 +720,6 @@ const DoctorDashboard = () => {
               </div>
             </div>
 
-            {/* Consultations par type */}
             <div className="dashboard-card">
               <div className="card-header">
                 <h2>Types de Consultations</h2>
@@ -385,7 +767,6 @@ const DoctorDashboard = () => {
             </div>
           </div>
 
-          {/* Graphique d'évolution et Patients récents */}
           <div className="dashboard-row">
             <div className="dashboard-card">
               <div className="card-header">
@@ -459,7 +840,6 @@ const DoctorDashboard = () => {
             </div>
           </div>
 
-          {/* Prochains RDV */}
           <div className="dashboard-card">
             <div className="card-header">
               <h2>Mes Prochains Rendez-vous</h2>

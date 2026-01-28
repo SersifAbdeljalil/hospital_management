@@ -23,11 +23,12 @@ import PatientDashboard from './pages/PatientDashboard';
 import Patients from './pages/Patients';
 import Doctors from './pages/Doctors';
 import Appointments from './pages/Appointments';
+import MyAppointments from './pages/MyAppointments'; // ⭐ Nouveau import
 import Consultations from './pages/Consultations';
 import Billing from './pages/Billing';
 import Users from './pages/Users';
 import Logs from './pages/Logs';
-import Settings from './pages/Settings'; // ⭐ Ajout de Settings
+import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -76,6 +77,16 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['medecin']}>
                   <DoctorDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ⭐ Mes Rendez-vous (Médecin) */}
+            <Route
+              path="/my-appointments"
+              element={
+                <ProtectedRoute allowedRoles={['medecin']}>
+                  <MyAppointments />
                 </ProtectedRoute>
               }
             />

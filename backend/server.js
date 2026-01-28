@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 const { testConnection } = require('./config/database');
@@ -9,9 +10,17 @@ const { testConnection } = require('./config/database');
 // Créer l'application Express
 const app = express();
 
-// Middlewares globaux
-app.use(helmet());
-app.use(cors());
+// ⭐ CORS Configuration - AVANT helmet
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
+
+// ⭐ Helmet avec configuration pour permettre les images cross-origin
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -22,8 +31,12 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Dossier public pour les fichiers uploadés
-app.use('/uploads', express.static('uploads'));
+// ⭐⭐⭐ Dossier public pour les fichiers uploadés avec headers CORS
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 // Route de test
 app.get('/', (req, res) => {
@@ -34,21 +47,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// Routes API
-app.use('/api/auth', require('./routes/authRoutes')); // ⭐ Route d'authentification
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/patients', require('./routes/patientRoutes'));
+// ⭐ Routes API - Nettoyées (pas de doublons)
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/patients', require('./routes/patientRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes')); 
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/patients', require('./routes/patientRoutes'));
-app.use('/api/appointments', require('./routes/appointmentRoutes'));
-app.use('/api/doctors', require('./routes/doctorRoutes')); // ⭐ Nouvelle route
-app.use('/api/consultations', require('./routes/consultationRoutes')); // ⭐ Nouvelle route
-app.use('/api/invoices', require('./routes/invoiceRoutes')); // ⭐ Nouvelle route
+app.use('/api/doctors', require('./routes/doctorRoutes'));
+app.use('/api/consultations', require('./routes/consultationRoutes'));
+app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
-app.use('/api/dashboard', require('./routes/dashboardRoutes'))
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/my-appointments', require('./routes/myAppointmentRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes')); // ⭐ AJOUTÉ
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -82,7 +91,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log('=================================');
       console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-      console.log(`📡 Mode: ${process.env.NODE_ENV}`);
+      console.log(`📡 Mode: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🌐 URL: http://localhost:${PORT}`);
       console.log('=================================');
     });

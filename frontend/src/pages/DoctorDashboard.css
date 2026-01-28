@@ -1088,3 +1088,539 @@
     height: 44px;
   }
 }
+/* Styles pour la photo de profil avec upload */
+
+.user-avatar-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 15px;
+}
+
+.user-avatar,
+.user-avatar-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.user-avatar-image {
+  object-fit: cover;
+  padding: 0;
+  font-size: 0;
+}
+
+.user-avatar:hover,
+.user-avatar-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.change-photo-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #4CAF50;
+  color: white;
+  border: 3px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.change-photo-btn:hover:not(:disabled) {
+  background: #45a049;
+  transform: scale(1.1);
+}
+
+.change-photo-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.change-photo-btn svg {
+  font-size: 16px;
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Menu de la photo */
+.photo-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  min-width: 180px;
+  z-index: 1000;
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.photo-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.photo-menu-item:hover {
+  background: #f5f5f5;
+}
+
+.photo-menu-item.delete {
+  color: #f44336;
+}
+
+.photo-menu-item.delete:hover {
+  background: #ffebee;
+}
+
+.photo-menu-item svg {
+  font-size: 18px;
+}
+
+/* Animation de rotation pour le refresh */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-avatar-container {
+    width: 60px;
+    height: 60px;
+  }
+
+  .user-avatar,
+  .user-avatar-image {
+    width: 60px;
+    height: 60px;
+    font-size: 22px;
+  }
+
+  .change-photo-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .change-photo-btn svg {
+    font-size: 14px;
+  }
+
+  .photo-menu {
+    min-width: 160px;
+  }
+}
+/* ===================================
+   NOTIFICATIONS STYLES
+   =================================== */
+
+/* Bouton de notification dans le header */
+.notification-btn {
+  position: relative;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-right: 10px;
+}
+
+.notification-btn:hover {
+  background: #f5f5f5;
+  border-color: #2196F3;
+}
+
+.notification-btn svg {
+  font-size: 22px;
+  color: #555;
+}
+
+.notification-btn:hover svg {
+  color: #2196F3;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #F44336;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Overlay pour le panneau de notifications */
+.notifications-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  backdrop-filter: blur(2px);
+}
+
+/* Panneau de notifications */
+.notifications-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  height: 100vh;
+  background: white;
+  box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Header du panneau */
+.notifications-panel .notifications-header {
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notifications-panel .header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notifications-panel .header-title svg {
+  font-size: 24px;
+}
+
+.notifications-panel .header-title h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.notifications-panel .unread-badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.notifications-panel .header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.notifications-panel .btn-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notifications-panel .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.notifications-panel .btn-icon svg {
+  font-size: 20px;
+}
+
+/* Corps du panneau */
+.notifications-panel .notifications-body {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+/* États de chargement et vide */
+.notifications-loading,
+.notifications-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.notifications-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2196F3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.notifications-empty .empty-icon {
+  font-size: 60px;
+  color: #ddd;
+  margin-bottom: 15px;
+}
+
+.notifications-empty p {
+  font-size: 16px;
+  color: #999;
+}
+
+/* Liste des notifications */
+.notifications-list {
+  padding: 10px;
+}
+
+/* Item de notification */
+.notification-item {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e0e0e0;
+}
+
+.notification-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.notification-item.unread {
+  background: #E3F2FD;
+  border-color: #2196F3;
+}
+
+/* Icône de notification */
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+}
+
+.notification-icon svg {
+  font-size: 20px;
+}
+
+/* Contenu de notification */
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.notification-message {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.notification-time {
+  font-size: 11px;
+  color: #999;
+}
+
+/* Bouton supprimer */
+.notification-delete {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.notification-item:hover .notification-delete {
+  opacity: 1;
+}
+
+.notification-delete:hover {
+  background: #f5f5f5;
+  color: #F44336;
+}
+
+.notification-delete svg {
+  font-size: 18px;
+}
+
+/* Indicateur non lu */
+.unread-indicator {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: #2196F3;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .notifications-panel {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .notification-btn {
+    padding: 8px 10px;
+  }
+
+  .notification-btn svg {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notifications-panel {
+    width: 100%;
+  }
+
+  .notification-item {
+    padding: 12px;
+  }
+
+  .notification-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .notification-title {
+    font-size: 13px;
+  }
+
+  .notification-message {
+    font-size: 12px;
+  }
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

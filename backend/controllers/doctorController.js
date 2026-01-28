@@ -1,5 +1,7 @@
 const { query } = require('../config/database');
 const bcrypt = require('bcryptjs');
+const path = require('path');
+const fs = require('fs');
 
 // @desc    Obtenir tous les médecins
 // @route   GET /api/doctors
@@ -414,6 +416,142 @@ exports.updateDoctorProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du profil',
+      error: error.message
+    });
+  }
+};
+
+// ⭐⭐⭐ NOUVELLES FONCTIONS - UPLOAD PHOTO ⭐⭐⭐
+
+// @desc    Upload photo de profil
+// @route   POST /api/doctors/profile/photo
+// @access  Private (medecin)
+exports.uploadProfilePhoto = async (req, res) => {
+  try {
+    // Vérifier si un fichier a été uploadé
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucune image fournie'
+      });
+    }
+
+    const userId = req.user.id;
+
+    // Récupérer l'ancien chemin de la photo
+    const [user] = await query(
+      'SELECT photo_profil FROM users WHERE id = ? AND role = "medecin"',
+      [userId]
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Médecin non trouvé'
+      });
+    }
+
+    // Supprimer l'ancienne photo si elle existe
+    if (user.photo_profil) {
+      const oldPhotoPath = path.join(__dirname, '..', user.photo_profil);
+      if (fs.existsSync(oldPhotoPath)) {
+        try {
+          fs.unlinkSync(oldPhotoPath);
+          console.log('✅ Ancienne photo supprimée');
+        } catch (err) {
+          console.error('Erreur suppression ancienne photo:', err);
+        }
+      }
+    }
+
+    // Nouveau chemin de la photo
+    const photoPath = `/uploads/profiles/${req.file.filename}`;
+
+    // Mettre à jour la base de données
+    await query(
+      'UPDATE users SET photo_profil = ? WHERE id = ?',
+      [photoPath, userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Photo de profil mise à jour avec succès',
+      data: {
+        photo_profil: photoPath
+      }
+    });
+  } catch (error) {
+    console.error('Erreur uploadProfilePhoto:', error);
+    
+    // Supprimer le fichier uploadé en cas d'erreur
+    if (req.file) {
+      const uploadedFilePath = req.file.path;
+      if (fs.existsSync(uploadedFilePath)) {
+        fs.unlinkSync(uploadedFilePath);
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'upload de la photo',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Supprimer photo de profil
+// @route   DELETE /api/doctors/profile/photo
+// @access  Private (medecin)
+exports.deleteProfilePhoto = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Récupérer le chemin de la photo
+    const [user] = await query(
+      'SELECT photo_profil FROM users WHERE id = ? AND role = "medecin"',
+      [userId]
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Médecin non trouvé'
+      });
+    }
+
+    if (!user.photo_profil) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucune photo de profil à supprimer'
+      });
+    }
+
+    // Supprimer le fichier physique
+    const photoPath = path.join(__dirname, '..', user.photo_profil);
+    if (fs.existsSync(photoPath)) {
+      try {
+        fs.unlinkSync(photoPath);
+        console.log('✅ Photo supprimée du système de fichiers');
+      } catch (err) {
+        console.error('Erreur suppression photo:', err);
+      }
+    }
+
+    // Mettre à jour la base de données
+    await query(
+      'UPDATE users SET photo_profil = NULL WHERE id = ?',
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Photo de profil supprimée avec succès'
+    });
+  } catch (error) {
+    console.error('Erreur deleteProfilePhoto:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression de la photo',
       error: error.message
     });
   }

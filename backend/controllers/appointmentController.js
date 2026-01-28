@@ -1,4 +1,5 @@
 const { query } = require('../config/database');
+const { createNotification } = require('./notificationController');
 
 // @desc    Obtenir tous les rendez-vous
 // @route   GET /api/appointments
@@ -11,7 +12,6 @@ exports.getAllAppointments = async (req, res) => {
       SELECT 
         a.id,
         a.date_heure,
-        a.duree,
         a.motif,
         a.statut,
         a.notes,
@@ -24,8 +24,8 @@ exports.getAllAppointments = async (req, res) => {
         m.prenom as medecin_prenom,
         m.specialite
       FROM appointments a
-      INNER JOIN users p ON a.patient_id = p.id
-      INNER JOIN patients pt ON pt.user_id = p.id
+      INNER JOIN patients pt ON a.patient_id = pt.id
+      INNER JOIN users p ON pt.user_id = p.id
       INNER JOIN users m ON a.medecin_id = m.id
       WHERE 1=1
     `;
@@ -55,14 +55,14 @@ exports.getAllAppointments = async (req, res) => {
 
     // Filtrer selon le rôle
     if (req.user.role === 'patient') {
-      sql += ' AND a.patient_id = ?';
+      sql += ' AND pt.user_id = ?';
       params.push(req.user.id);
     } else if (req.user.role === 'medecin') {
       sql += ' AND a.medecin_id = ?';
       params.push(req.user.id);
     }
 
-    sql += ' ORDER BY a.date_heure ASC';
+    sql += ' ORDER BY a.date_heure DESC';
 
     const appointments = await query(sql, params);
 
@@ -95,6 +95,7 @@ exports.getAppointmentById = async (req, res) => {
         p.prenom as patient_prenom,
         p.email as patient_email,
         p.telephone as patient_telephone,
+        pt.user_id as patient_user_id,
         pt.numero_dossier,
         pt.groupe_sanguin,
         m.nom as medecin_nom,
@@ -102,8 +103,8 @@ exports.getAppointmentById = async (req, res) => {
         m.specialite,
         m.email as medecin_email
       FROM appointments a
-      INNER JOIN users p ON a.patient_id = p.id
-      INNER JOIN patients pt ON pt.user_id = p.id
+      INNER JOIN patients pt ON a.patient_id = pt.id
+      INNER JOIN users p ON pt.user_id = p.id
       INNER JOIN users m ON a.medecin_id = m.id
       WHERE a.id = ?
     `;
@@ -118,11 +119,13 @@ exports.getAppointmentById = async (req, res) => {
     }
 
     // Vérifier les permissions
-    if (req.user.role === 'patient' && appointment.patient_id !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Accès non autorisé'
-      });
+    if (req.user.role === 'patient') {
+      if (appointment.patient_user_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Accès non autorisé'
+        });
+      }
     }
 
     if (req.user.role === 'medecin' && appointment.medecin_id !== req.user.id) {
@@ -155,7 +158,6 @@ exports.createAppointment = async (req, res) => {
       patient_id,
       medecin_id,
       date_heure,
-      duree = 30,
       motif,
       notes
     } = req.body;
@@ -181,23 +183,11 @@ exports.createAppointment = async (req, res) => {
     const checkSql = `
       SELECT id FROM appointments 
       WHERE medecin_id = ? 
-      AND DATE(date_heure) = DATE(?)
+      AND date_heure = ?
       AND statut NOT IN ('annule', 'termine')
-      AND (
-        (date_heure <= ? AND DATE_ADD(date_heure, INTERVAL duree MINUTE) > ?) OR
-        (date_heure < DATE_ADD(?, INTERVAL ? MINUTE) AND date_heure >= ?)
-      )
     `;
 
-    const conflicts = await query(checkSql, [
-      medecin_id,
-      date_heure,
-      date_heure,
-      date_heure,
-      date_heure,
-      duree,
-      date_heure
-    ]);
+    const conflicts = await query(checkSql, [medecin_id, date_heure]);
 
     if (conflicts.length > 0) {
       return res.status(400).json({
@@ -208,24 +198,69 @@ exports.createAppointment = async (req, res) => {
 
     // Créer le rendez-vous
     const insertSql = `
-      INSERT INTO appointments (patient_id, medecin_id, date_heure, duree, motif, notes, statut)
-      VALUES (?, ?, ?, ?, ?, ?, 'planifie')
+      INSERT INTO appointments (patient_id, medecin_id, date_heure, motif, notes, statut)
+      VALUES (?, ?, ?, ?, ?, 'planifie')
     `;
 
     const result = await query(insertSql, [
       patient_id,
       medecin_id,
       date_heure,
-      duree,
       motif,
       notes
     ]);
+
+    const appointmentId = result.insertId;
+
+    // Récupérer les infos complètes pour les notifications
+    const [appointmentInfo] = await query(`
+      SELECT 
+        a.*,
+        p.nom as patient_nom,
+        p.prenom as patient_prenom,
+        pt.user_id as patient_user_id,
+        m.nom as medecin_nom,
+        m.prenom as medecin_prenom
+      FROM appointments a
+      INNER JOIN patients pt ON a.patient_id = pt.id
+      INNER JOIN users p ON pt.user_id = p.id
+      INNER JOIN users m ON a.medecin_id = m.id
+      WHERE a.id = ?
+    `, [appointmentId]);
+
+    // Envoyer notification au PATIENT
+    try {
+      await createNotification(
+        appointmentInfo.patient_user_id,
+        'appointment_created',
+        'Nouveau rendez-vous confirmé',
+        `Votre rendez-vous avec Dr. ${appointmentInfo.medecin_nom} ${appointmentInfo.medecin_prenom} a été planifié pour le ${new Date(date_heure).toLocaleDateString('fr-FR')} à ${new Date(date_heure).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+        appointmentId,
+        req.user.id
+      );
+    } catch (notifError) {
+      console.error('Erreur notification patient:', notifError);
+    }
+
+    // Envoyer notification au MÉDECIN
+    try {
+      await createNotification(
+        medecin_id,
+        'appointment_created',
+        'Nouveau rendez-vous',
+        `Un rendez-vous avec ${appointmentInfo.patient_nom} ${appointmentInfo.patient_prenom} a été planifié pour le ${new Date(date_heure).toLocaleDateString('fr-FR')} à ${new Date(date_heure).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+        appointmentId,
+        req.user.id
+      );
+    } catch (notifError) {
+      console.error('Erreur notification médecin:', notifError);
+    }
 
     res.status(201).json({
       success: true,
       message: 'Rendez-vous créé avec succès',
       data: {
-        id: result.insertId
+        id: appointmentId
       }
     });
   } catch (error) {
@@ -246,14 +281,19 @@ exports.updateAppointment = async (req, res) => {
     const { id } = req.params;
     const {
       date_heure,
-      duree,
       motif,
       notes,
       statut
     } = req.body;
 
     // Vérifier que le rendez-vous existe
-    const [existing] = await query('SELECT * FROM appointments WHERE id = ?', [id]);
+    const [existing] = await query(`
+      SELECT a.*, pt.user_id as patient_user_id
+      FROM appointments a
+      INNER JOIN patients pt ON a.patient_id = pt.id
+      WHERE a.id = ?
+    `, [id]);
+    
     if (!existing) {
       return res.status(404).json({
         success: false,
@@ -275,22 +315,13 @@ exports.updateAppointment = async (req, res) => {
         SELECT id FROM appointments 
         WHERE medecin_id = ? 
         AND id != ?
-        AND DATE(date_heure) = DATE(?)
+        AND date_heure = ?
         AND statut NOT IN ('annule', 'termine')
-        AND (
-          (date_heure <= ? AND DATE_ADD(date_heure, INTERVAL duree MINUTE) > ?) OR
-          (date_heure < DATE_ADD(?, INTERVAL ? MINUTE) AND date_heure >= ?)
-        )
       `;
 
       const conflicts = await query(checkSql, [
         existing.medecin_id,
         id,
-        date_heure,
-        date_heure,
-        date_heure,
-        date_heure,
-        duree || existing.duree,
         date_heure
       ]);
 
@@ -306,7 +337,6 @@ exports.updateAppointment = async (req, res) => {
     const updateSql = `
       UPDATE appointments 
       SET date_heure = COALESCE(?, date_heure),
-          duree = COALESCE(?, duree),
           motif = COALESCE(?, motif),
           notes = COALESCE(?, notes),
           statut = COALESCE(?, statut)
@@ -315,12 +345,50 @@ exports.updateAppointment = async (req, res) => {
 
     await query(updateSql, [
       date_heure || null,
-      duree || null,
       motif || null,
       notes || null,
       statut || null,
       id
     ]);
+
+    // Récupérer les infos pour notification
+    const [updatedInfo] = await query(`
+      SELECT 
+        a.*,
+        p.nom as patient_nom,
+        p.prenom as patient_prenom,
+        pt.user_id as patient_user_id,
+        m.nom as medecin_nom,
+        m.prenom as medecin_prenom
+      FROM appointments a
+      INNER JOIN patients pt ON a.patient_id = pt.id
+      INNER JOIN users p ON pt.user_id = p.id
+      INNER JOIN users m ON a.medecin_id = m.id
+      WHERE a.id = ?
+    `, [id]);
+
+    // Notifier les changements
+    if (date_heure && date_heure !== existing.date_heure) {
+      // Notification au patient
+      await createNotification(
+        updatedInfo.patient_user_id,
+        'appointment_updated',
+        'Rendez-vous modifié',
+        `Votre rendez-vous a été reprogrammé au ${new Date(date_heure).toLocaleDateString('fr-FR')} à ${new Date(date_heure).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+        id,
+        req.user.id
+      );
+
+      // Notification au médecin
+      await createNotification(
+        updatedInfo.medecin_id,
+        'appointment_updated',
+        'Rendez-vous modifié',
+        `Le rendez-vous avec ${updatedInfo.patient_nom} ${updatedInfo.patient_prenom} a été reprogrammé`,
+        id,
+        req.user.id
+      );
+    }
 
     res.status(200).json({
       success: true,
@@ -343,7 +411,17 @@ exports.cancelAppointment = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [existing] = await query('SELECT * FROM appointments WHERE id = ?', [id]);
+    const [existing] = await query(`
+      SELECT a.*, pt.user_id as patient_user_id,
+        p.nom as patient_nom, p.prenom as patient_prenom,
+        m.nom as medecin_nom, m.prenom as medecin_prenom
+      FROM appointments a
+      INNER JOIN patients pt ON a.patient_id = pt.id
+      INNER JOIN users p ON pt.user_id = p.id
+      INNER JOIN users m ON a.medecin_id = m.id
+      WHERE a.id = ?
+    `, [id]);
+    
     if (!existing) {
       return res.status(404).json({
         success: false,
@@ -352,15 +430,35 @@ exports.cancelAppointment = async (req, res) => {
     }
 
     // Vérifier les permissions
-    if (req.user.role === 'patient' && existing.patient_id !== req.user.id) {
+    if (req.user.role === 'patient' && existing.patient_user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Vous ne pouvez annuler que vos propres rendez-vous'
       });
     }
 
-    // Mettre le statut à "annule" au lieu de supprimer
+    // Mettre le statut à "annule"
     await query('UPDATE appointments SET statut = ? WHERE id = ?', ['annule', id]);
+
+    // Notifier le patient
+    await createNotification(
+      existing.patient_user_id,
+      'appointment_cancelled',
+      'Rendez-vous annulé',
+      `Votre rendez-vous du ${new Date(existing.date_heure).toLocaleDateString('fr-FR')} a été annulé`,
+      id,
+      req.user.id
+    );
+
+    // Notifier le médecin
+    await createNotification(
+      existing.medecin_id,
+      'appointment_cancelled',
+      'Rendez-vous annulé',
+      `Le rendez-vous avec ${existing.patient_nom} ${existing.patient_prenom} du ${new Date(existing.date_heure).toLocaleDateString('fr-FR')} a été annulé`,
+      id,
+      req.user.id
+    );
 
     res.status(200).json({
       success: true,
@@ -393,7 +491,7 @@ exports.getAvailability = async (req, res) => {
 
     // Récupérer tous les RDV du médecin pour cette date
     const sql = `
-      SELECT date_heure, duree 
+      SELECT date_heure 
       FROM appointments 
       WHERE medecin_id = ? 
       AND DATE(date_heure) = DATE(?)
@@ -415,16 +513,9 @@ exports.getAvailability = async (req, res) => {
         
         // Vérifier si ce créneau est libre
         const isBooked = bookedSlots.some(booking => {
-          const bookingStart = new Date(booking.date_heure);
-          const bookingEnd = new Date(bookingStart.getTime() + booking.duree * 60000);
-          const slotStart = new Date(slotTime);
-          const slotEnd = new Date(slotStart.getTime() + slotDuration * 60000);
-
-          return (
-            (slotStart >= bookingStart && slotStart < bookingEnd) ||
-            (slotEnd > bookingStart && slotEnd <= bookingEnd) ||
-            (slotStart <= bookingStart && slotEnd >= bookingEnd)
-          );
+          const bookingTime = new Date(booking.date_heure).getTime();
+          const slotStart = new Date(slotTime).getTime();
+          return bookingTime === slotStart;
         });
 
         if (!isBooked) {

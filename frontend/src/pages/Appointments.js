@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import appointmentService from '../services/appointmentService';
 import patientService from '../services/patientService';
+import doctorService from '../services/doctorService'; // ⭐ AJOUT
 import useAuth from '../hooks/useAuth';
 import {
   MdAdd,
@@ -91,17 +92,29 @@ const Appointments = () => {
     }
   };
 
-  // Récupérer les médecins
+  // ⭐⭐⭐ FONCTION CORRIGÉE - Récupérer les médecins ⭐⭐⭐
   const fetchDoctors = async () => {
     try {
-      // Appel API pour obtenir les médecins
-      // Pour l'instant, on peut créer un endpoint ou utiliser une requête directe
-      setDoctors([
-        { id: 2, nom: 'Bennani', prenom: 'Ahmed', specialite: 'Cardiologie' }
-        // Ajouter d'autres médecins de test
-      ]);
+      console.log('📞 Appel fetchDoctors...');
+      
+      // ✅ Utiliser getAllDoctors avec une grande limite pour récupérer tous les médecins
+      const response = await doctorService.getAllDoctors({ 
+        limit: 1000, // Grande limite pour obtenir tous les médecins
+        statut: 'actif' // Optionnel : ne récupérer que les médecins actifs
+      });
+      
+      console.log('📊 Réponse API doctors:', response);
+      
+      if (response.success) {
+        console.log('✅ Médecins récupérés:', response.data.length);
+        setDoctors(response.data);
+      } else {
+        console.error('❌ Échec de récupération des médecins');
+        toast.error('Erreur lors du chargement des médecins');
+      }
     } catch (error) {
-      console.error('Erreur chargement médecins:', error);
+      console.error('❌ Erreur chargement médecins:', error);
+      toast.error(error.message || 'Erreur lors du chargement des médecins');
     }
   };
 
@@ -633,10 +646,22 @@ const Appointments = () => {
                           <option value="">Sélectionner un médecin</option>
                           {doctors.map(doctor => (
                             <option key={doctor.id} value={doctor.id}>
-                              Dr. {doctor.nom} {doctor.prenom} - {doctor.specialite}
+                              Dr. {doctor.nom} {doctor.prenom}
+                              {doctor.specialite && ` - ${doctor.specialite}`}
                             </option>
                           ))}
                         </select>
+                        {/* ⭐ INDICATEUR DE DEBUG */}
+                        {doctors.length === 0 && (
+                          <small style={{ color: '#999', marginTop: '5px', display: 'block' }}>
+                            Chargement des médecins...
+                          </small>
+                        )}
+                        {doctors.length > 0 && (
+                          <small style={{ color: '#4CAF50', marginTop: '5px', display: 'block' }}>
+                            ✓ {doctors.length} médecin(s) disponible(s)
+                          </small>
+                        )}
                       </div>
                     )}
 
