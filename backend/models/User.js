@@ -1,17 +1,9 @@
-// ============================================
-// MODÈLE USER - GESTION DES UTILISATEURS
-// Système d'authentification et autorisation
-// ============================================
-
+const { query } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
 class User {
-  constructor(db) {
-    this.db = db;
-  }
-
-  // ========== CRÉATION D'UTILISATEUR ==========
-  async create(userData) {
+  // Créer un nouvel utilisateur
+  static async create(userData) {
     const {
       nom,
       prenom,
@@ -26,20 +18,20 @@ class User {
       numero_licence
     } = userData;
 
-    // Hash du mot de passe
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const query = `
+    const sql = `
       INSERT INTO users (
         nom, prenom, email, password, role, telephone, 
-        adresse, date_naissance, sexe, specialite, numero_licence
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        adresse, date_naissance, sexe, specialite, numero_licence, statut
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif')
     `;
 
-    const [result] = await this.db.execute(query, [
+    const result = await query(sql, [
       nom,
       prenom,
-      email.toLowerCase(),
+      email,
       hashedPassword,
       role,
       telephone || null,
@@ -53,167 +45,106 @@ class User {
     return result.insertId;
   }
 
-  // ========== RECHERCHE PAR EMAIL ==========
-  async findByEmail(email) {
-    const query = `
-      SELECT * FROM users 
-      WHERE email = ? AND statut != 'suspendu'
-    `;
-    
-    const [users] = await this.db.execute(query, [email.toLowerCase()]);
-    return users[0] || null;
+  // Trouver un utilisateur par email
+  static async findByEmail(email) {
+    const sql = 'SELECT * FROM users WHERE email = ? LIMIT 1';
+    const results = await query(sql, [email]);
+    return results[0] || null;
   }
 
-  // ========== RECHERCHE PAR ID ==========
-  async findById(id) {
-    const query = `
-      SELECT id, nom, prenom, email, role, telephone, adresse, 
-             date_naissance, sexe, statut, photo_profil, specialite, 
-             numero_licence, created_at, last_login
-      FROM users 
-      WHERE id = ?
-    `;
-    
-    const [users] = await this.db.execute(query, [id]);
-    return users[0] || null;
+  // Trouver un utilisateur par ID
+  static async findById(id) {
+    const sql = 'SELECT * FROM users WHERE id = ? LIMIT 1';
+    const results = await query(sql, [id]);
+    return results[0] || null;
   }
 
-  // ========== VÉRIFICATION DU MOT DE PASSE ==========
-  async verifyPassword(plainPassword, hashedPassword) {
-    return await bcrypt.compare(plainPassword, hashedPassword);
-  }
-
-  // ========== MISE À JOUR DU DERNIER LOGIN ==========
-  async updateLastLogin(userId) {
-    const query = `
-      UPDATE users 
-      SET last_login = NOW() 
-      WHERE id = ?
-    `;
-    
-    await this.db.execute(query, [userId]);
-  }
-
-  // ========== MISE À JOUR DU PROFIL ==========
-  async updateProfile(userId, updateData) {
-    const {
-      nom,
-      prenom,
-      telephone,
-      adresse,
-      date_naissance,
-      sexe,
-      photo_profil
-    } = updateData;
-
-    const query = `
-      UPDATE users 
-      SET nom = ?, prenom = ?, telephone = ?, adresse = ?, 
-          date_naissance = ?, sexe = ?, photo_profil = ?
-      WHERE id = ?
-    `;
-
-    await this.db.execute(query, [
-      nom,
-      prenom,
-      telephone,
-      adresse,
-      date_naissance,
-      sexe,
-      photo_profil,
-      userId
-    ]);
-  }
-
-  // ========== CHANGEMENT DE MOT DE PASSE ==========
-  async updatePassword(userId, newPassword) {
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-    
-    const query = `
-      UPDATE users 
-      SET password = ? 
-      WHERE id = ?
-    `;
-    
-    await this.db.execute(query, [hashedPassword, userId]);
-  }
-
-  // ========== LISTE DES UTILISATEURS ==========
-  async findAll(filters = {}) {
-    let query = `
-      SELECT id, nom, prenom, email, role, telephone, 
-             statut, specialite, created_at, last_login
-      FROM users 
-      WHERE 1=1
-    `;
+  // Trouver tous les utilisateurs
+  static async findAll(filters = {}) {
+    let sql = 'SELECT id, nom, prenom, email, role, telephone, statut, created_at FROM users WHERE 1=1';
     const params = [];
 
-    // Filtre par rôle
     if (filters.role) {
-      query += ` AND role = ?`;
+      sql += ' AND role = ?';
       params.push(filters.role);
     }
 
-    // Filtre par statut
     if (filters.statut) {
-      query += ` AND statut = ?`;
+      sql += ' AND statut = ?';
       params.push(filters.statut);
     }
 
-    // Recherche par nom/prénom
-    if (filters.search) {
-      query += ` AND (nom LIKE ? OR prenom LIKE ? OR email LIKE ?)`;
-      const searchTerm = `%${filters.search}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
+    sql += ' ORDER BY created_at DESC';
+
+    return await query(sql, params);
+  }
+
+  // Mettre à jour un utilisateur
+  static async update(id, userData) {
+    const fields = [];
+    const values = [];
+
+    // Construire dynamiquement la requête
+    Object.keys(userData).forEach(key => {
+      if (key !== 'id' && key !== 'password' && userData[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        values.push(userData[key]);
+      }
+    });
+
+    // Si le mot de passe est fourni, le hasher
+    if (userData.password) {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      fields.push('password = ?');
+      values.push(hashedPassword);
     }
 
-    query += ` ORDER BY created_at DESC`;
+    if (fields.length === 0) {
+      throw new Error('Aucune donnée à mettre à jour');
+    }
 
-    const [users] = await this.db.execute(query, params);
-    return users;
+    values.push(id);
+
+    const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ?`;
+    const result = await query(sql, values);
+
+    return result.affectedRows > 0;
   }
 
-  // ========== MISE À JOUR DU STATUT ==========
-  async updateStatut(userId, statut) {
-    const query = `
-      UPDATE users 
-      SET statut = ? 
-      WHERE id = ?
-    `;
-    
-    await this.db.execute(query, [statut, userId]);
+  // Supprimer un utilisateur
+  static async delete(id) {
+    const sql = 'DELETE FROM users WHERE id = ?';
+    const result = await query(sql, [id]);
+    return result.affectedRows > 0;
   }
 
-  // ========== SUPPRESSION D'UTILISATEUR ==========
-  async delete(userId) {
-    const query = `DELETE FROM users WHERE id = ?`;
-    await this.db.execute(query, [userId]);
+  // Vérifier le mot de passe
+  static async comparePassword(plainPassword, hashedPassword) {
+    return await bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  // ========== STATISTIQUES PAR RÔLE ==========
-  async getStatsByRole() {
-    const query = `
+  // Mettre à jour la dernière connexion
+  static async updateLastLogin(id) {
+    const sql = 'UPDATE users SET last_login = NOW() WHERE id = ?';
+    await query(sql, [id]);
+  }
+
+  // Changer le statut
+  static async updateStatus(id, statut) {
+    const sql = 'UPDATE users SET statut = ? WHERE id = ?';
+    const result = await query(sql, [statut, id]);
+    return result.affectedRows > 0;
+  }
+
+  // Compter les utilisateurs par rôle
+  static async countByRole() {
+    const sql = `
       SELECT role, COUNT(*) as count 
       FROM users 
       WHERE statut = 'actif'
       GROUP BY role
     `;
-    
-    const [stats] = await this.db.execute(query);
-    return stats;
-  }
-
-  // ========== MÉDECINS ACTIFS ==========
-  async getActiveDoctors() {
-    const query = `
-      SELECT id, nom, prenom, specialite, email, telephone
-      FROM users 
-      WHERE role = 'medecin' AND statut = 'actif'
-      ORDER BY nom, prenom
-    `;
-    
-    const [doctors] = await this.db.execute(query);
-    return doctors;
+    return await query(sql);
   }
 }
 

@@ -10,15 +10,15 @@ const { testConnection } = require('./config/database');
 const app = express();
 
 // Middlewares globaux
-app.use(helmet()); // Sécurité des headers HTTP
-app.use(cors()); // CORS
-app.use(express.json()); // Parser JSON
-app.use(express.urlencoded({ extended: true })); // Parser URL-encoded
+app.use(helmet());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // max 100 requêtes par IP
+  windowMs: 15 * 60 * 1000,
+  max: 100
 });
 app.use('/api/', limiter);
 
@@ -27,66 +27,69 @@ app.use('/uploads', express.static('uploads'));
 
 // Route de test
 app.get('/', (req, res) => {
-    res.json({
-        message: 'API Hospital Management System',
-        version: '1.0.0',
-        status: 'running'
-    });
+  res.json({
+    message: 'API Hospital Management System',
+    version: '1.0.0',
+    status: 'running'
+  });
 });
 
-// Routes API (à ajouter progressivement)
-// app.use('/api/auth', require('./routes/authRoutes'));
-// app.use('/api/users', require('./routes/userRoutes'));
-// app.use('/api/patients', require('./routes/patientRoutes'));
-// app.use('/api/appointments', require('./routes/appointmentRoutes'));
-// app.use('/api/consultations', require('./routes/consultationRoutes'));
-// app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
-// app.use('/api/billing', require('./routes/billingRoutes'));
-// app.use('/api/logs', require('./routes/logRoutes'));
-
-// Middleware de gestion des erreurs (à la fin)
+// Routes API
+app.use('/api/auth', require('./routes/authRoutes')); // ⭐ Route d'authentification
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/patients', require('./routes/patientRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/patients', require('./routes/patientRoutes'));
+app.use('/api/appointments', require('./routes/appointmentRoutes')); 
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/patients', require('./routes/patientRoutes'));
+app.use('/api/appointments', require('./routes/appointmentRoutes'));
+app.use('/api/doctors', require('./routes/doctorRoutes')); // ⭐ Nouvelle route
+app.use('/api/consultations', require('./routes/consultationRoutes')); // ⭐ Nouvelle route
+app.use('/api/invoices', require('./routes/invoiceRoutes')); // ⭐ Nouvelle route
+app.use('/api/settings', require('./routes/settingsRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'))
+// Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(err.status || 500).json({
-        success: false,
-        message: err.message || 'Erreur serveur interne',
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    });
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Erreur serveur interne',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
 });
 
-// Route 404 - DOIT ÊTRE LA DERNIÈRE ROUTE
+// Route 404
 app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Route non trouvée'
-    });
+  res.status(404).json({
+    success: false,
+    message: 'Route non trouvée'
+  });
 });
 
 // Démarrage du serveur
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-    try {
-        // Tester la connexion à la base de données
-        const dbConnected = await testConnection();
-        
-        if (!dbConnected) {
-            console.error('❌ Impossible de se connecter à la base de données');
-            process.exit(1);
-        }
-        
-        // Démarrer le serveur
-        app.listen(PORT, () => {
-            console.log('=================================');
-            console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-            console.log(`📡 Mode: ${process.env.NODE_ENV}`);
-            console.log(`🌐 URL: http://localhost:${PORT}`);
-            console.log('=================================');
-        });
-    } catch (error) {
-        console.error('❌ Erreur au démarrage du serveur:', error.message);
-        process.exit(1);
+  try {
+    const dbConnected = await testConnection();
+    
+    if (!dbConnected) {
+      console.error('❌ Impossible de se connecter à la base de données');
+      process.exit(1);
     }
+    
+    app.listen(PORT, () => {
+      console.log('=================================');
+      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+      console.log(`📡 Mode: ${process.env.NODE_ENV}`);
+      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log('=================================');
+    });
+  } catch (error) {
+    console.error('❌ Erreur au démarrage du serveur:', error.message);
+    process.exit(1);
+  }
 };
 
 startServer();

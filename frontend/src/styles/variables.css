@@ -1,0 +1,256 @@
+/* ============================================
+   CSS VARIABLES - SIGMAX MEDICAL DESIGN SYSTEM
+   ============================================ */
+
+:root {
+  /* ========== COLORS - PRIMARY (Bleu médical) ========== */
+  --primary-50: #E3F2FD;
+  --primary-100: #BBDEFB;
+  --primary-200: #90CAF9;
+  --primary-300: #64B5F6;
+  --primary-400: #42A5F5;
+  --primary-500: #2196F3;
+  --primary-600: #1976D2;
+  --primary-700: #1565C0;
+  --primary-800: #0D47A1;
+  --primary-900: #0A3D91;
+
+  /* ========== COLORS - SECONDARY (Vert santé) ========== */
+  --secondary-50: #E0F2F1;
+  --secondary-100: #B2DFDB;
+  --secondary-200: #80CBC4;
+  --secondary-300: #4DB6AC;
+  --secondary-400: #26A69A;
+  --secondary-500: #009688;
+  --secondary-600: #00897B;
+  --secondary-700: #00796B;
+  --secondary-800: #00695C;
+  --secondary-900: #004D40;
+
+  /* ========== COLORS - ACCENT ========== */
+  --accent-50: #FFF3E0;
+  --accent-100: #FFE0B2;
+  --accent-200: #FFCC80;
+  --accent-300: #FFB74D;
+  --accent-400: #FFA726;
+  --accent-500: #FF9800;
+  --accent-600: #FB8C00;
+  --accent-700: #F57C00;
+  --accent-800: #EF6C00;
+  --accent-900: #E65100;
+
+  /* ========== COLORS - NEUTRAL (Gris) ========== */
+  --gray-50: #FAFAFA;
+  --gray-100: #F5F5F5;
+  --gray-200: #EEEEEE;
+  --gray-300: #E0E0E0;
+  --gray-400: #BDBDBD;
+  --gray-500: #9E9E9E;
+  --gray-600: #757575;
+  --gray-700: #616161;
+  --gray-800: #424242;
+  --gray-900: #212121;
+
+  /* ========== COLORS - SEMANTIC ========== */
+  --success: #4CAF50;
+  --success-light: #81C784;
+  --success-dark: #388E3C;
+  
+  --danger: #F44336;
+  --danger-light: #EF5350;
+  --danger-dark: #D32F2F;
+  
+  --warning: #FF9800;
+  --warning-light: #FFB74D;
+  --warning-dark: #F57C00;
+  
+  --info: #2196F3;
+  --info-light: #64B5F6;
+  --info-dark: #1976D2;
+
+  /* ========== COLORS - BASE ========== */
+  --white: #FFFFFF;
+  --black: #000000;
+
+  /* ========== COLORS - TEXT ========== */
+  --text-primary: #263238;
+  --text-secondary: #546E7A;
+  --text-muted: #90A4AE;
+  --text-disabled: #B0BEC5;
+  --text-inverse: #FFFFFF;
+
+  /* ========== COLORS - BACKGROUND ========== */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FAFAFA;
+  --bg-tertiary: #F5F5F5;
+  --bg-disabled: #EEEEEE;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* ========== COLORS - BORDERS ========== */
+  --border-base: #E0E0E0;
+  --border-strong: #BDBDBD;
+  --border-light: #F5F5F5;
+
+  /* ========== GRADIENTS ========== */
+  --gradient-primary: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  --gradient-secondary: linear-gradient(135deg, #4DB6AC 0%, #00897B 100%);
+  --gradient-accent: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  --gradient-success: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+  --gradient-danger: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+
+  /* ========== SPACING ========== */
+  --space-0: 0;
+  --space-1: 0.25rem;    /* 4px */
+  --space-2: 0.5rem;     /* 8px */
+  --space-3: 0.75rem;    /* 12px */
+  --space-4: 1rem;       /* 16px */
+  --space-5: 1.25rem;    /* 20px */
+  --space-6: 1.5rem;     /* 24px */
+  --space-8: 2rem;       /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+  --space-20: 5rem;      /* 80px */
+  --space-24: 6rem;      /* 96px */
+
+  /* ========== TYPOGRAPHY ========== */
+  --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  --font-secondary: 'Georgia', 'Times New Roman', serif;
+  --font-mono: 'Courier New', Courier, monospace;
+
+  --font-thin: 100;
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-black: 900;
+
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+  --text-5xl: 3rem;      /* 48px */
+
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+  --leading-loose: 2;
+
+  /* ========== BORDERS ========== */
+  --border-width: 1px;
+  --border-width-2: 2px;
+  --border-width-4: 4px;
+
+  /* ========== BORDER RADIUS ========== */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-base: 0.5rem;  /* 8px */
+  --radius-md: 0.75rem;   /* 12px */
+  --radius-lg: 1rem;      /* 16px */
+  --radius-xl: 1.5rem;    /* 24px */
+  --radius-2xl: 2rem;     /* 32px */
+  --radius-full: 9999px;
+
+  /* ========== SHADOWS ========== */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 8px 0 rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 16px 0 rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 12px 24px 0 rgba(0, 0, 0, 0.18);
+  --shadow-2xl: 0 16px 32px 0 rgba(0, 0, 0, 0.22);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  --shadow-focus: 0 0 0 3px rgba(33, 150, 243, 0.2);
+  --shadow-focus-error: 0 0 0 3px rgba(244, 67, 54, 0.2);
+
+  /* ========== TRANSITIONS ========== */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-all: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-colors: color 250ms cubic-bezier(0.4, 0, 0.2, 1), background-color 250ms cubic-bezier(0.4, 0, 0.2, 1), border-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ========== Z-INDEX ========== */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-notification: 1080;
+
+  /* ========== COMPONENT SPECIFIC ========== */
+  
+  /* Button Heights */
+  --button-height-sm: 2rem;      /* 32px */
+  --button-height-base: 2.5rem;  /* 40px */
+  --button-height-lg: 3rem;      /* 48px */
+  --button-height-xl: 3.5rem;    /* 56px */
+
+  /* Input Heights */
+  --input-height-sm: 2rem;       /* 32px */
+  --input-height-base: 2.5rem;   /* 40px */
+  --input-height-lg: 3rem;       /* 48px */
+
+  /* Container Widths */
+  --container-xs: 480px;
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+}
+
+/* ========== DARK MODE (Optional) ========== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #ECEFF1;
+    --text-secondary: #B0BEC5;
+    --text-muted: #78909C;
+    --bg-primary: #263238;
+    --bg-secondary: #37474F;
+    --bg-tertiary: #455A64;
+    --border-base: #546E7A;
+  }
+}
+
+/* ========== RESET & BASE STYLES ========== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========== UTILITY CLASSES ========== */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.container-xs { max-width: var(--container-xs); }
+.container-sm { max-width: var(--container-sm); }
+.container-md { max-width: var(--container-md); }
+.container-lg { max-width: var(--container-lg); }
+.container-xl { max-width: var(--container-xl); }
+.container-2xl { max-width: var(--container-2xl); }

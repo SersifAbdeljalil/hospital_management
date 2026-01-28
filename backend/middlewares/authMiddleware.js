@@ -1,98 +1,86 @@
-// ============================================
-// MIDDLEWARE AUTHENTIFICATION
-// Vérification des tokens JWT
-// ============================================
-
-const { verifyToken, extractTokenFromHeader } = require('../config/auth');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+require('dotenv').config();
 
-// ========== MIDDLEWARE AUTH PRINCIPAL ==========
-const authenticate = async (req, res, next) => {
+// Middleware pour protéger les routes
+exports.protect = async (req, res, next) => {
   try {
-    // 1. Extraire le token du header
-    const token = extractTokenFromHeader(req.headers.authorization);
+    let token;
 
+    // Vérifier si le token est dans les headers
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    // Vérifier si le token existe
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Accès non autorisé. Token manquant.'
+        message: 'Non autorisé - Token manquant'
       });
     }
 
-    // 2. Vérifier et décoder le token
-    let decoded;
     try {
-      decoded = verifyToken(token);
+      // Vérifier et décoder le token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // Récupérer l'utilisateur (sans le mot de passe)
+      const user = await User.findById(decoded.id);
+
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Utilisateur non trouvé'
+        });
+      }
+
+      // Vérifier si l'utilisateur est actif
+      if (user.statut !== 'actif') {
+        return res.status(403).json({
+          success: false,
+          message: 'Compte inactif'
+        });
+      }
+
+      // Ajouter l'utilisateur à la requête
+      req.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        nom: user.nom,
+        prenom: user.prenom
+      };
+
+      next();
     } catch (error) {
       return res.status(401).json({
         success: false,
-        message: error.message || 'Token invalide ou expiré'
+        message: 'Token invalide ou expiré'
       });
     }
-
-    // 3. Vérifier que c'est un token d'accès
-    if (decoded.type !== 'access') {
-      return res.status(401).json({
-        success: false,
-        message: 'Type de token invalide'
-      });
-    }
-
-    // 4. Récupérer l'utilisateur depuis la base de données
-    const userModel = new User(req.db);
-    const user = await userModel.findById(decoded.id);
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Utilisateur non trouvé'
-      });
-    }
-
-    // 5. Vérifier le statut de l'utilisateur
-    if (user.statut === 'inactif' || user.statut === 'suspendu') {
-      return res.status(403).json({
-        success: false,
-        message: 'Compte désactivé ou suspendu'
-      });
-    }
-
-    // 6. Attacher l'utilisateur à la requête
-    req.user = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      nom: user.nom,
-      prenom: user.prenom,
-      statut: user.statut
-    };
-
-    next();
   } catch (error) {
-    console.error('Erreur middleware auth:', error);
-    res.status(500).json({
+    console.error('Erreur dans authMiddleware:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Erreur serveur lors de l\'authentification'
+      message: 'Erreur serveur',
+      error: error.message
     });
   }
 };
 
-// ========== MIDDLEWARE OPTIONNEL ==========
-// Authentifie si token présent, sinon continue
-const authenticateOptional = async (req, res, next) => {
+// Middleware optionnel (route accessible avec ou sans auth)
+exports.optional = async (req, res, next) => {
   try {
-    const token = extractTokenFromHeader(req.headers.authorization);
+    let token;
 
-    if (!token) {
-      return next();
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
     }
 
-    try {
-      const decoded = verifyToken(token);
-      
-      if (decoded.type === 'access') {
-        const userModel = new User(req.db);
-        const user = await userModel.findById(decoded.id);
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
 
         if (user && user.statut === 'actif') {
           req.user = {
@@ -103,134 +91,13 @@ const authenticateOptional = async (req, res, next) => {
             prenom: user.prenom
           };
         }
-      }
-    } catch (error) {
-      // Token invalide, mais on continue quand même
-      console.log('Token optionnel invalide:', error.message);
-    }
-
-    next();
-  } catch (error) {
-    console.error('Erreur middleware auth optionnel:', error);
-    next();
-  }
-};
-
-// ========== VÉRIFICATION DU PROPRIÉTAIRE ==========
-// Vérifie que l'utilisateur accède à ses propres données
-const isOwner = (paramName = 'userId') => {
-  return (req, res, next) => {
-    const resourceUserId = parseInt(req.params[paramName]);
-    const currentUserId = req.user.id;
-
-    // Admin peut accéder à tout
-    if (req.user.role === 'admin') {
-      return next();
-    }
-
-    // Vérifier si c'est le propriétaire
-    if (resourceUserId !== currentUserId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Accès refusé. Vous ne pouvez accéder qu\'à vos propres données.'
-      });
-    }
-
-    next();
-  };
-};
-
-// ========== VÉRIFICATION PATIENT ==========
-// Vérifie que le patient accède à son propre dossier
-const isPatientOwner = async (req, res, next) => {
-  try {
-    const patientId = parseInt(req.params.patientId || req.params.id);
-    
-    // Admin et staff médical peuvent accéder à tous les patients
-    if (['admin', 'medecin', 'infirmier', 'receptionniste'].includes(req.user.role)) {
-      return next();
-    }
-
-    // Pour les patients, vérifier qu'ils accèdent à leur propre dossier
-    if (req.user.role === 'patient') {
-      const db = req.db;
-      const [patients] = await db.execute(
-        'SELECT id FROM patients WHERE id = ? AND user_id = ?',
-        [patientId, req.user.id]
-      );
-
-      if (patients.length === 0) {
-        return res.status(403).json({
-          success: false,
-          message: 'Accès refusé à ce dossier patient'
-        });
+      } catch (error) {
+        // Token invalide, continuer sans user
       }
     }
 
     next();
   } catch (error) {
-    console.error('Erreur vérification propriétaire patient:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la vérification des permissions'
-    });
+    next();
   }
-};
-
-// ========== LIMITATION DES TENTATIVES DE CONNEXION ==========
-const loginAttempts = new Map();
-
-const rateLimitLogin = (req, res, next) => {
-  const identifier = req.body.email || req.ip;
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
-  const maxAttempts = 5;
-
-  if (!loginAttempts.has(identifier)) {
-    loginAttempts.set(identifier, []);
-  }
-
-  const attempts = loginAttempts.get(identifier);
-  
-  // Nettoyer les anciennes tentatives
-  const recentAttempts = attempts.filter(time => now - time < windowMs);
-  
-  if (recentAttempts.length >= maxAttempts) {
-    const oldestAttempt = Math.min(...recentAttempts);
-    const remainingTime = Math.ceil((windowMs - (now - oldestAttempt)) / 1000 / 60);
-    
-    return res.status(429).json({
-      success: false,
-      message: `Trop de tentatives de connexion. Réessayez dans ${remainingTime} minute(s).`
-    });
-  }
-
-  recentAttempts.push(now);
-  loginAttempts.set(identifier, recentAttempts);
-  
-  next();
-};
-
-// Nettoyer les anciennes tentatives toutes les heures
-setInterval(() => {
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000;
-  
-  for (const [identifier, attempts] of loginAttempts.entries()) {
-    const recentAttempts = attempts.filter(time => now - time < windowMs);
-    
-    if (recentAttempts.length === 0) {
-      loginAttempts.delete(identifier);
-    } else {
-      loginAttempts.set(identifier, recentAttempts);
-    }
-  }
-}, 60 * 60 * 1000);
-
-module.exports = {
-  authenticate,
-  authenticateOptional,
-  isOwner,
-  isPatientOwner,
-  rateLimitLogin
 };

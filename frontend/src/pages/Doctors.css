@@ -1,0 +1,151 @@
+/* ============================================
+   DOCTORS PAGE - STYLES
+   ============================================ */
+
+.doctors-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Réutilisation des styles de Patients.css */
+
+.doctors-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.doctors-table-container {
+  background: #FFFFFF;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.doctors-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.doctors-table thead {
+  background: #F5F5F5;
+}
+
+.doctors-table th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #616161;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #E0E0E0;
+}
+
+.doctors-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #F5F5F5;
+  color: #263238;
+}
+
+.doctors-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.doctors-table tbody tr:hover {
+  background: #FAFAFA;
+}
+
+.doctor-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.doctor-name strong {
+  color: #263238;
+  font-weight: 600;
+}
+
+.doctor-gender {
+  font-size: 0.75rem;
+  color: #757575;
+  font-style: italic;
+}
+
+.specialite-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #E8F5E9;
+  color: #2E7D32;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.licence-number {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #FFF3E0;
+  color: #F57C00;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.badge-success {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.badge-danger {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+/* Détails du médecin */
+.doctor-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.doctor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .doctors-table-container {
+    overflow-x: auto;
+  }
+
+  .doctors-table {
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 768px) {
+  .doctors-page {
+    padding: 1rem;
+  }
+
+  .doctors-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .doctors-table th,
+  .doctors-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+  }
+}

@@ -1,0 +1,282 @@
+/* ============================================
+   CONSULTATIONS PAGE - STYLES
+   ============================================ */
+
+.consultations-page {
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.consultations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.consultations-table-container {
+  background: #FFFFFF;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.consultations-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.consultations-table thead {
+  background: #F5F5F5;
+}
+
+.consultations-table th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #616161;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #E0E0E0;
+}
+
+.consultations-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #F5F5F5;
+  color: #263238;
+}
+
+.consultations-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.consultations-table tbody tr:hover {
+  background: #FAFAFA;
+}
+
+/* Date consultation */
+.consultation-date {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.consultation-date svg {
+  width: 16px;
+  height: 16px;
+  color: #1565C0;
+  margin-right: 0.5rem;
+}
+
+.consultation-date span {
+  font-weight: 600;
+  color: #263238;
+}
+
+.consultation-date small {
+  font-size: 0.75rem;
+  color: #757575;
+}
+
+/* Patient info */
+.patient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.patient-info strong {
+  color: #263238;
+  font-weight: 600;
+}
+
+.patient-info .numero-dossier {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  background: #E3F2FD;
+  color: #1565C0;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+/* Médecin info */
+.medecin-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.medecin-info strong {
+  color: #263238;
+  font-weight: 600;
+}
+
+.medecin-info .specialite {
+  font-size: 0.75rem;
+  color: #757575;
+  font-style: italic;
+}
+
+/* Diagnostic badge */
+.diagnostic-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #E8F5E9;
+  color: #2E7D32;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Statut badges */
+.badge-en_cours {
+  background: #FFF3E0;
+  color: #F57C00;
+}
+
+.badge-terminee {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.badge-annulee {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+/* Button success */
+.btn-success {
+  color: #2E7D32;
+}
+
+.btn-success:hover {
+  background: #E8F5E9;
+}
+
+/* Modal large */
+.modal-large {
+  max-width: 1000px;
+}
+
+/* Consultation details */
+.consultation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.detail-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #263238;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #E0E0E0;
+}
+
+.detail-section h3 svg {
+  width: 24px;
+  height: 24px;
+  color: #1565C0;
+}
+
+.detail-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.detail-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-text .detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-text .detail-value {
+  background: #F5F5F5;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  line-height: 1.6;
+}
+
+.diagnostic-highlight {
+  background: #E8F5E9 !important;
+  color: #2E7D32;
+  font-weight: 600;
+}
+
+/* Consultation form */
+.consultation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-row-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+  .consultations-table-container {
+    overflow-x: auto;
+  }
+
+  .consultations-table {
+    min-width: 1200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .consultations-page {
+    padding: 1rem;
+  }
+
+  .consultations-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .modal-large {
+    max-width: 100%;
+  }
+
+  .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .consultations-table th,
+  .consultations-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .consultation-date {
+    font-size: 0.875rem;
+  }
+
+  .patient-info,
+  .medecin-info {
+    font-size: 0.875rem;
+  }
+}
