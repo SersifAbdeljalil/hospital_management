@@ -240,40 +240,56 @@ const DoctorDashboard = () => {
     setShowPhotoMenu(false);
   };
 
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+ const handlePhotoUpload = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-    if (!validTypes.includes(file.type)) {
-      toast.error('Seules les images (JPEG, PNG, GIF) sont autorisées');
-      return;
-    }
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+  if (!validTypes.includes(file.type)) {
+    toast.error('Seules les images (JPEG, PNG, GIF) sont autorisées');
+    return;
+  }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('La taille de l\'image ne doit pas dépasser 5 MB');
-      return;
-    }
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('La taille de l\'image ne doit pas dépasser 5 MB');
+    return;
+  }
 
-    setUploadingPhoto(true);
+  setUploadingPhoto(true);
 
-    try {
-      const response = await doctorService.uploadProfilePhoto(file);
+  try {
+    const response = await doctorService.uploadProfilePhoto(file);
+    
+    if (response.success) {
+      // Créer l'objet utilisateur mis à jour avec un timestamp pour forcer le rechargement
+      const photoUrl = response.data.photo_profil + '?t=' + new Date().getTime();
       
-      if (response.success) {
-        toast.success('Photo de profil mise à jour avec succès');
-        updateUser({
-          ...user,
-          photo_profil: response.data.photo_profil
-        });
-      }
-    } catch (error) {
-      console.error('Erreur upload photo:', error);
-      toast.error(error.message || 'Erreur lors du téléchargement de la photo');
-    } finally {
-      setUploadingPhoto(false);
+      const updatedUser = {
+        ...user,
+        photo_profil: response.data.photo_profil
+      };
+      
+      // Mettre à jour via le contexte
+      updateUser(updatedUser);
+      
+      // Sauvegarder dans localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast.success('Photo de profil mise à jour avec succès');
+      
+      // Forcer le rechargement du composant
+      window.location.reload();
     }
-  };
+  } catch (error) {
+    console.error('Erreur upload photo:', error);
+    toast.error(error.message || 'Erreur lors du téléchargement de la photo');
+  } finally {
+    setUploadingPhoto(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+};
 
   const handleDeletePhoto = async () => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')) {
@@ -288,10 +304,20 @@ const DoctorDashboard = () => {
       
       if (response.success) {
         toast.success('Photo de profil supprimée avec succès');
-        updateUser({
+        
+        // Créer l'objet utilisateur mis à jour
+        const updatedUser = {
           ...user,
           photo_profil: null
-        });
+        };
+        
+        // Mettre à jour via le contexte (qui sauvegarde dans localStorage)
+        updateUser(updatedUser);
+        
+        // Double sécurité : sauvegarder directement aussi
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        console.log('Photo supprimée');
       }
     } catch (error) {
       console.error('Erreur suppression photo:', error);
@@ -678,7 +704,7 @@ const DoctorDashboard = () => {
             </div>
           </div>
 
-          {/* Reste du contenu du dashboard (inchangé) */}
+          {/* Reste du contenu du dashboard */}
           <div className="dashboard-row">
             <div className="dashboard-card">
               <div className="card-header">

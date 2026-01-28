@@ -3,10 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Import correct du AuthProvider
 import { AuthProvider } from './context/AuthContext';
-
-// Import des composants
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages Auth
@@ -23,13 +20,18 @@ import PatientDashboard from './pages/PatientDashboard';
 import Patients from './pages/Patients';
 import Doctors from './pages/Doctors';
 import Appointments from './pages/Appointments';
-import MyAppointments from './pages/MyAppointments'; // ⭐ Nouveau import
+import MyAppointments from './pages/MyAppointments';
+import MyPatients from './pages/MyPatients';
 import Consultations from './pages/Consultations';
 import Billing from './pages/Billing';
 import Users from './pages/Users';
 import Logs from './pages/Logs';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
+
+// ⭐⭐⭐ NOUVELLES PAGES: ORDONNANCES ⭐⭐⭐
+import Prescriptions from './pages/Prescriptions';
+import MyPrescriptions from './pages/MyPrescriptions';
 
 function App() {
   return (
@@ -39,8 +41,6 @@ function App() {
           <Routes>
             {/* ========== ROUTE PUBLIQUE ========== */}
             <Route path="/login" element={<Login />} />
-
-            {/* Redirection de la racine vers login */}
             <Route path="/" element={<Navigate to="/login" replace />} />
 
             {/* ========== ROUTES ADMIN ========== */}
@@ -52,7 +52,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/admin/users"
               element={
@@ -61,7 +60,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/logs"
               element={
@@ -80,13 +78,28 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* ⭐ Mes Rendez-vous (Médecin) */}
             <Route
               path="/my-appointments"
               element={
                 <ProtectedRoute allowedRoles={['medecin']}>
                   <MyAppointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-patients"
+              element={
+                <ProtectedRoute allowedRoles={['medecin']}>
+                  <MyPatients />
+                </ProtectedRoute>
+              }
+            />
+            {/* ⭐ Ordonnances - Médecin */}
+            <Route
+              path="/prescriptions"
+              element={
+                <ProtectedRoute allowedRoles={['medecin']}>
+                  <Prescriptions />
                 </ProtectedRoute>
               }
             />
@@ -120,10 +133,17 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* ⭐ Ordonnances - Patient */}
+            <Route
+              path="/my-prescriptions"
+              element={
+                <ProtectedRoute allowedRoles={['patient']}>
+                  <MyPrescriptions />
+                </ProtectedRoute>
+              }
+            />
 
             {/* ========== ROUTES PARTAGÉES ========== */}
-            
-            {/* Patients - Admin, Médecin, Infirmier, Réceptionniste */}
             <Route
               path="/patients"
               element={
@@ -132,8 +152,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* Médecins - Admin, Réceptionniste */}
             <Route
               path="/doctors"
               element={
@@ -142,8 +160,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* Rendez-vous - Tous les utilisateurs connectés */}
             <Route
               path="/appointments"
               element={
@@ -152,8 +168,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* Consultations - Admin, Médecin, Infirmier, Patient */}
             <Route
               path="/consultations"
               element={
@@ -162,8 +176,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* ⭐ Facturation/Paiements - Admin, Réceptionniste, Patient */}
             <Route
               path="/billing"
               element={
@@ -172,8 +184,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* ⭐ Alias pour /payments → /billing */}
             <Route
               path="/payments"
               element={
@@ -182,8 +192,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* ⭐ Paramètres - Admin */}
             <Route
               path="/settings"
               element={
@@ -192,8 +200,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
-            {/* Utilisateurs (si différent de /admin/users) */}
             <Route
               path="/users"
               element={

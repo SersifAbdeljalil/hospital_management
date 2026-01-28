@@ -15,7 +15,11 @@ import {
   MdSchedule,
   MdFilterList,
   MdSearch,
-  MdRefresh
+  MdRefresh,
+  MdDownload,
+  MdEdit,
+  MdClose,
+  MdWarning
 } from 'react-icons/md';
 import './MyAppointments.css';
 
@@ -32,6 +36,8 @@ const MyAppointments = () => {
   });
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
     fetchAppointments();
@@ -76,6 +82,37 @@ const MyAppointments = () => {
     }
   };
 
+  const handleDownloadPDF = async (id) => {
+    try {
+      await myAppointmentService.downloadAppointmentPDF(id);
+      toast.success('PDF téléchargé avec succès');
+    } catch (error) {
+      toast.error('Erreur lors du téléchargement du PDF');
+    }
+  };
+
+  const handleAddNotes = (appointment) => {
+    setSelectedAppointment(appointment);
+    setNotes(appointment.notes || '');
+    setShowNotesModal(true);
+  };
+
+  const handleSaveNotes = async () => {
+    try {
+      const response = await myAppointmentService.addAppointmentNotes(
+        selectedAppointment.id,
+        notes
+      );
+      if (response.success) {
+        toast.success('Notes enregistrées');
+        setShowNotesModal(false);
+        fetchAppointments();
+      }
+    } catch (error) {
+      toast.error('Erreur lors de l\'enregistrement');
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -93,12 +130,12 @@ const MyAppointments = () => {
 
   const getStatusBadge = (statut) => {
     const config = {
-      planifie: { label: 'Planifié', class: 'appointments-status-planned', icon: <MdSchedule /> },
-      confirme: { label: 'Confirmé', class: 'appointments-status-confirmed', icon: <MdCheckCircle /> },
-      en_cours: { label: 'En cours', class: 'appointments-status-ongoing', icon: <MdAccessTime /> },
-      termine: { label: 'Terminé', class: 'appointments-status-completed', icon: <MdCheckCircle /> },
-      annule: { label: 'Annulé', class: 'appointments-status-cancelled', icon: <MdCancel /> },
-      non_presente: { label: 'Non présenté', class: 'appointments-status-absent', icon: <MdCancel /> }
+      planifie: { label: 'Planifié', class: 'appointments-status-planifie', icon: <MdSchedule /> },
+      confirme: { label: 'Confirmé', class: 'appointments-status-confirme', icon: <MdCheckCircle /> },
+      en_cours: { label: 'En cours', class: 'appointments-status-en_cours', icon: <MdAccessTime /> },
+      termine: { label: 'Terminé', class: 'appointments-status-termine', icon: <MdCheckCircle /> },
+      annule: { label: 'Annulé', class: 'appointments-status-annule', icon: <MdCancel /> },
+      non_presente: { label: 'Non présenté', class: 'appointments-status-non_presente', icon: <MdWarning /> }
     };
     
     const { label, class: className, icon } = config[statut] || config.planifie;
@@ -109,6 +146,18 @@ const MyAppointments = () => {
         {label}
       </span>
     );
+  };
+
+  const calculateAge = (dateNaissance) => {
+    if (!dateNaissance) return 'N/A';
+    const today = new Date();
+    const birthDate = new Date(dateNaissance);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
   if (loading) {
@@ -124,6 +173,7 @@ const MyAppointments = () => {
 
   return (
     <div className="my-appointments-page">
+      {/* Header */}
       <div className="appointments-page-header">
         <div>
           <h1>Mes Rendez-vous</h1>
@@ -227,6 +277,24 @@ const MyAppointments = () => {
                 >
                   Voir détails
                 </button>
+
+                <button
+                  className="appointments-btn-pdf"
+                  onClick={() => handleDownloadPDF(apt.id)}
+                  title="Télécharger en PDF"
+                >
+                  <MdDownload />
+                  PDF
+                </button>
+
+                <button
+                  className="appointments-btn-notes"
+                  onClick={() => handleAddNotes(apt)}
+                  title="Ajouter des notes"
+                >
+                  <MdEdit />
+                  Notes
+                </button>
                 
                 {apt.statut === 'confirme' && (
                   <button
@@ -262,29 +330,133 @@ const MyAppointments = () => {
           <div className="appointments-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="appointments-modal-header">
               <h2>Détails du Rendez-vous</h2>
-              <button 
-                className="appointments-modal-close" 
-                onClick={() => setShowModal(false)}
-              >
-                <MdCancel />
+              <button className="appointments-modal-close" onClick={() => setShowModal(false)}>
+                <MdClose />
               </button>
             </div>
             <div className="appointments-modal-body">
-              {/* Contenu du modal */}
-              <div className="appointments-appointment-time">
-                <MdAccessTime />
-                <strong>{formatTime(selectedAppointment.date_heure)}</strong>
-              </div>
-              <div className="appointments-patient-info">
-                <div className="appointments-info-row">
-                  <MdPerson />
-                  <span>{selectedAppointment.patient_prenom} {selectedAppointment.patient_nom}</span>
+              <div className="detail-section">
+                <h3>Informations du Rendez-vous</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="label">Date:</span>
+                    <span className="value">{formatDate(selectedAppointment.date_heure)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Heure:</span>
+                    <span className="value">{formatTime(selectedAppointment.date_heure)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Durée:</span>
+                    <span className="value">{selectedAppointment.duree_minutes} minutes</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Statut:</span>
+                    <span className="value">{getStatusBadge(selectedAppointment.statut)}</span>
+                  </div>
                 </div>
-                <div className="appointments-info-row">
-                  <MdPhone />
-                  <span>{selectedAppointment.patient_telephone || 'N/A'}</span>
+              </div>
+
+              <div className="detail-section">
+                <h3>Informations Patient</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="label">Nom:</span>
+                    <span className="value">
+                      {selectedAppointment.patient_prenom} {selectedAppointment.patient_nom}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">N° Dossier:</span>
+                    <span className="value">{selectedAppointment.numero_dossier}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Téléphone:</span>
+                    <span className="value">{selectedAppointment.patient_telephone || 'N/A'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Âge:</span>
+                    <span className="value">
+                      {calculateAge(selectedAppointment.patient_date_naissance)} ans
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Sexe:</span>
+                    <span className="value">{selectedAppointment.patient_sexe || 'N/A'}</span>
+                  </div>
+                  {selectedAppointment.groupe_sanguin && (
+                    <div className="detail-item">
+                      <span className="label">Groupe sanguin:</span>
+                      <span className="value">{selectedAppointment.groupe_sanguin}</span>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {selectedAppointment.motif && (
+                <div className="detail-section">
+                  <h3>Motif de consultation</h3>
+                  <p className="detail-text">{selectedAppointment.motif}</p>
+                </div>
+              )}
+
+              {selectedAppointment.antecedents_medicaux && (
+                <div className="detail-section">
+                  <h3>Antécédents médicaux</h3>
+                  <p className="detail-text">{selectedAppointment.antecedents_medicaux}</p>
+                </div>
+              )}
+
+              {selectedAppointment.allergies && (
+                <div className="allergies-section">
+                  <h3><MdWarning /> Allergies</h3>
+                  <p className="detail-text alert">{selectedAppointment.allergies}</p>
+                </div>
+              )}
+
+              {selectedAppointment.notes && (
+                <div className="detail-section">
+                  <h3>Notes</h3>
+                  <p className="detail-text">{selectedAppointment.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Notes */}
+      {showNotesModal && (
+        <div className="appointments-modal-overlay" onClick={() => setShowNotesModal(false)}>
+          <div className="appointments-modal-content appointments-modal-small" onClick={(e) => e.stopPropagation()}>
+            <div className="appointments-modal-header">
+              <h2>Ajouter des notes</h2>
+              <button className="appointments-modal-close" onClick={() => setShowNotesModal(false)}>
+                <MdClose />
+              </button>
+            </div>
+            <div className="appointments-modal-body">
+              <textarea
+                className="notes-textarea"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Saisissez vos notes ici..."
+                rows="6"
+              />
+            </div>
+            <div className="appointments-modal-footer">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowNotesModal(false)}
+              >
+                Annuler
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleSaveNotes}
+              >
+                Enregistrer
+              </button>
             </div>
           </div>
         </div>

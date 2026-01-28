@@ -39,6 +39,35 @@ const myAppointmentService = {
     } catch (error) {
       throw error.response?.data || { message: 'Erreur réseau' };
     }
+  },
+
+  // ⭐ NOUVELLE MÉTHODE : Télécharger le PDF
+  downloadAppointmentPDF: async (id) => {
+    try {
+      const response = await api.get(`/my-appointments/${id}/pdf`, {
+        responseType: 'blob'
+      });
+
+      // Créer un URL temporaire pour le blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      
+      // Créer un élément <a> pour télécharger
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `RDV-${id}-${Date.now()}.pdf`);
+      
+      // Déclencher le téléchargement
+      document.body.appendChild(link);
+      link.click();
+      
+      // Nettoyer
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      return { success: true };
+    } catch (error) {
+      throw error.response?.data || { message: 'Erreur lors du téléchargement du PDF' };
+    }
   }
 };
 

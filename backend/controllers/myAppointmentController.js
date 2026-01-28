@@ -254,3 +254,63 @@ exports.addAppointmentNotes = async (req, res) => {
     });
   }
 };
+const { generateAppointmentPDF } = require('../utils/pdfGenerator');
+
+// @desc    Télécharger le rendez-vous en PDF
+// @route   GET /api/my-appointments/:id/pdf
+// @access  Private (medecin)
+exports.downloadAppointmentPDF = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const medecinId = req.user.id;
+
+    // Récupérer les détails du rendez-vous
+    const sql = `
+      SELECT 
+        a.*,
+        p.numero_dossier,
+        u.nom as patient_nom,
+        u.prenom as patient_prenom,
+        u.telephone as patient_telephone,
+        m.nom as medecin_nom,
+        m.prenom as medecin_prenom,
+        m.specialite
+      FROM appointments a
+      INNER JOIN patients p ON a.patient_id = p.id
+      INNER JOIN users u ON p.user_id = u.id
+      INNER JOIN users m ON a.medecin_id = m.id
+      WHERE a.id = ? AND a.medecin_id = ?
+    `;
+
+    const result = await query(sql, [id, medecinId]);
+    const appointment = result[0];
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rendez-vous non trouvé'
+      });
+    }
+
+    // Générer le PDF
+    const pdfInfo = await generateAppointmentPDF(appointment);
+
+    // Envoyer le fichier
+    res.download(pdfInfo.filePath, pdfInfo.fileName, (err) => {
+      if (err) {
+        console.error('Erreur téléchargement PDF:', err);
+        res.status(500).json({
+          success: false,
+          message: 'Erreur lors du téléchargement'
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Erreur downloadAppointmentPDF:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la génération du PDF',
+      error: error.message
+    });
+  }
+};

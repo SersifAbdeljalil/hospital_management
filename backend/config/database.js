@@ -1,7 +1,7 @@
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 require('dotenv').config();
 
-// Créer le pool de connexions
+// Créer le pool avec mysql2 (PAS mysql2/promise)
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -15,10 +15,12 @@ const pool = mysql.createPool({
     timezone: '+00:00'
 });
 
-// Fonction de test de connexion
+const promisePool = pool.promise();
+
+// Test de connexion
 const testConnection = async () => {
     try {
-        const connection = await pool.getConnection();
+        const connection = await promisePool.getConnection();
         console.log('✅ Connexion à MySQL réussie!');
         console.log(`📊 Base de données: ${process.env.DB_NAME}`);
         connection.release();
@@ -29,15 +31,15 @@ const testConnection = async () => {
     }
 };
 
-// Fonction helper pour exécuter des requêtes
-const query = async (sql, params) => {
+// Fonction helper - VERSION SIMPLE ET ROBUSTE
+const query = async (sql, params = []) => {
     try {
-        const [results] = await pool.execute(sql, params);
+        const [results] = await promisePool.query(sql, params);
         return results;
     } catch (error) {
-        console.error('Erreur SQL:', error.message);
+        console.error('❌ Erreur SQL:', error.message);
         throw error;
     }
 };
 
-module.exports = { pool, testConnection, query };
+module.exports = { pool, promisePool, testConnection, query };

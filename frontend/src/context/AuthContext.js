@@ -27,7 +27,10 @@ export const AuthProvider = ({ children }) => {
             try {
               const freshUser = await authService.getCurrentUser();
               if (freshUser) {
+                // Mettre à jour l'utilisateur avec les données fraîches du serveur
                 setUser(freshUser);
+                // Sauvegarder dans localStorage
+                localStorage.setItem('user', JSON.stringify(freshUser));
               }
             } catch (error) {
               console.error('Erreur lors du rafraîchissement du profil:', error);
@@ -60,6 +63,9 @@ export const AuthProvider = ({ children }) => {
         setUser(userWithRole);
         setIsAuthenticated(true);
         
+        // Sauvegarder dans localStorage
+        localStorage.setItem('user', JSON.stringify(userWithRole));
+        
         return { 
           success: true, 
           user: userWithRole 
@@ -87,6 +93,10 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         setUser(response.user);
         setIsAuthenticated(true);
+        
+        // Sauvegarder dans localStorage
+        localStorage.setItem('user', JSON.stringify(response.user));
+        
         return { success: true, user: response.user };
       }
       
@@ -104,11 +114,14 @@ export const AuthProvider = ({ children }) => {
     await authService.logout();
     setUser(null);
     setIsAuthenticated(false);
+    // Nettoyer le localStorage
+    localStorage.removeItem('user');
   };
 
   // Fonction pour mettre à jour l'utilisateur
   const updateUser = (userData) => {
     setUser(userData);
+    // IMPORTANT : Toujours sauvegarder dans localStorage
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
@@ -118,6 +131,8 @@ export const AuthProvider = ({ children }) => {
       const freshUser = await authService.getCurrentUser();
       if (freshUser) {
         setUser(freshUser);
+        // Sauvegarder dans localStorage
+        localStorage.setItem('user', JSON.stringify(freshUser));
         return freshUser;
       }
       return null;

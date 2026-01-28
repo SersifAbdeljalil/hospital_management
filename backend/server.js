@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
     status: 'running'
   });
 });
-
+const myPatientRoutes = require('./routes/myPatientRoutes');
 // ⭐ Routes API - Nettoyées (pas de doublons)
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/patients', require('./routes/patientRoutes'));
@@ -58,6 +58,8 @@ app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/my-appointments', require('./routes/myAppointmentRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes')); // ⭐ AJOUTÉ
+app.use('/api/my-patients', myPatientRoutes);
+app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
   console.error(err.stack);
