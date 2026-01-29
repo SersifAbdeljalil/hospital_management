@@ -23,8 +23,8 @@ exports.getNotifications = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: notifications.length,
-      data: notifications
+      count: notifications ? notifications.length : 0,
+      data: notifications || []
     });
   } catch (error) {
     console.error('Erreur getNotifications:', error);
@@ -48,15 +48,18 @@ exports.getUnreadCount = async (req, res) => {
       [userId]
     );
 
+    const count = result && result.length > 0 ? result[0].count : 0;
+
     res.status(200).json({
       success: true,
-      count: result[0].count
+      count: count
     });
   } catch (error) {
     console.error('Erreur getUnreadCount:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération du nombre de notifications',
+      count: 0,
       error: error.message
     });
   }
@@ -69,6 +72,19 @@ exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+
+    // Vérifier que la notification appartient à l'utilisateur
+    const notification = await query(
+      'SELECT * FROM notifications WHERE id = ? AND user_id = ?',
+      [id, userId]
+    );
+
+    if (!notification || notification.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification non trouvée'
+      });
+    }
 
     await query(
       'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?',
@@ -97,7 +113,7 @@ exports.markAllAsRead = async (req, res) => {
     const userId = req.user.id;
 
     await query(
-      'UPDATE notifications SET is_read = 1 WHERE user_id = ?',
+      'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0',
       [userId]
     );
 
@@ -122,6 +138,19 @@ exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+
+    // Vérifier que la notification appartient à l'utilisateur
+    const notification = await query(
+      'SELECT * FROM notifications WHERE id = ? AND user_id = ?',
+      [id, userId]
+    );
+
+    if (!notification || notification.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification non trouvée'
+      });
+    }
 
     await query(
       'DELETE FROM notifications WHERE id = ? AND user_id = ?',

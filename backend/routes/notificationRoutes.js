@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middlewares/authMiddleware'); // ✅ CORRIGÉ : middlewares avec un 's'
+const { protect } = require('../middlewares/authMiddleware');
 const notificationController = require('../controllers/notificationController');
 
 // Toutes les routes sont protégées

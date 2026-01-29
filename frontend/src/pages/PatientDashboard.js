@@ -1,76 +1,220 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import dashboardService from '../services/dashboardService';
-import appointmentService from '../services/appointmentService';
+import patientDashboardService from '../services/patientDashboardService';
+import notificationService from '../services/notificationservice';
 import useAuth from '../hooks/useAuth';
 import {
+  MdDashboard,
   MdCalendarToday,
   MdLocalHospital,
+  MdMedication,
+  MdPayment,
   MdPerson,
-  MdNotifications,
-  MdChevronRight,
-  MdCheckCircle,
-  MdSchedule,
-  MdCancel,
   MdRefresh,
-  MdAdd,
-  MdDashboard,
   MdLogout,
   MdMenu,
   MdClose,
-  MdAccountCircle
+  MdCameraAlt,
+  MdDelete,
+  MdNotifications,
+  MdNotificationsActive,
+  MdNotificationsNone,
+  MdDoneAll,
+  MdInfo,
+  MdAttachMoney,
+  MdCheckCircle,
+  MdWarning,
+  MdCancel,
+  MdChevronRight,
+  MdAccessTime,
+  MdSchedule
 } from 'react-icons/md';
-import { FaStethoscope, FaFileMedical, FaPrescription, FaUserInjured } from 'react-icons/fa';
+import { FaUserInjured, FaHeartbeat } from 'react-icons/fa';
 import './PatientDashboard.css';
 
 const PatientDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   
   const [stats, setStats] = useState(null);
-  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
-  const [recentConsultations, setRecentConsultations] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  
+  // États pour les notifications
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchStats();
+    fetchUnreadCount();
+    
+    // Actualiser le compteur de notifications toutes les 30 secondes
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchDashboardData = async () => {
+  // Charger les notifications quand le panneau s'ouvre
+  useEffect(() => {
+    if (showNotifications) {
+      fetchNotifications();
+    }
+  }, [showNotifications]);
+
+  const fetchStats = async () => {
     setLoading(true);
     try {
-      // Récupérer les statistiques patient
-      const statsResponse = await dashboardService.getPatientStats();
-      if (statsResponse.success) {
-        setStats(statsResponse.data);
+      const response = await patientDashboardService.getPatientStats();
+      console.log('Stats reçues:', response);
+      if (response.success) {
+        setStats(response.data);
       }
-
-      // Récupérer les prochains rendez-vous
-      const appointmentsResponse = await appointmentService.getMyAppointments({
-        statut: 'planifie,confirme',
-        limit: 5
-      });
-      if (appointmentsResponse.success) {
-        setUpcomingAppointments(appointmentsResponse.data || []);
-      }
-
     } catch (error) {
-      console.error('Erreur fetchDashboardData:', error);
-      toast.error('Erreur lors du chargement des données');
+      console.error('Erreur fetchStats:', error);
+      toast.error(error.message || 'Erreur lors du chargement des statistiques');
     } finally {
       setLoading(false);
     }
   };
 
+  // Récupérer les notifications
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const response = await notificationService.getNotifications();
+      if (response.success) {
+        setNotifications(response.data);
+      }
+    } catch (error) {
+      console.error('Erreur fetchNotifications:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  // Récupérer le nombre de notifications non lues
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await notificationService.getUnreadCount();
+      if (response.success) {
+        setUnreadCount(response.count);
+      }
+    } catch (error) {
+      console.error('Erreur fetchUnreadCount:', error);
+    }
+  };
+
+  // Marquer une notification comme lue
+  const handleMarkAsRead = async (id) => {
+    try {
+      const response = await notificationService.markAsRead(id);
+      if (response.success) {
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif.id === id ? { ...notif, is_read: true } : notif
+          )
+        );
+        fetchUnreadCount();
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  // Marquer toutes les notifications comme lues
+  const handleMarkAllAsRead = async () => {
+    try {
+      const response = await notificationService.markAllAsRead();
+      if (response.success) {
+        setNotifications(prev =>
+          prev.map(notif => ({ ...notif, is_read: true }))
+        );
+        setUnreadCount(0);
+        toast.success('Toutes les notifications marquées comme lues');
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  // Supprimer une notification
+  const handleDeleteNotification = async (id) => {
+    try {
+      const response = await notificationService.deleteNotification(id);
+      if (response.success) {
+        setNotifications(prev => prev.filter(notif => notif.id !== id));
+        fetchUnreadCount();
+        toast.success('Notification supprimée');
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  // Obtenir l'icône de la notification
+  const getNotificationIcon = (type) => {
+    const icons = {
+      appointment_created: <MdCalendarToday />,
+      appointment_updated: <MdCalendarToday />,
+      appointment_cancelled: <MdCancel />,
+      appointment_reminder: <MdNotificationsActive />,
+      consultation_created: <MdCheckCircle />,
+      prescription_created: <MdMedication />,
+      payment_reminder: <MdPayment />,
+      message: <MdInfo />
+    };
+    return icons[type] || <MdNotifications />;
+  };
+
+  // Obtenir la couleur de la notification
+  const getNotificationColor = (type) => {
+    const colors = {
+      appointment_created: '#4CAF50',
+      appointment_updated: '#2196F3',
+      appointment_cancelled: '#F44336',
+      appointment_reminder: '#FF9800',
+      consultation_created: '#9C27B0',
+      prescription_created: '#00BCD4',
+      payment_reminder: '#FF5722',
+      message: '#2196F3'
+    };
+    return colors[type] || '#757575';
+  };
+
+  // Formater la date de notification
+  const formatNotificationDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'À l\'instant';
+    if (diffMins < 60) return `Il y a ${diffMins} min`;
+    if (diffHours < 24) return `Il y a ${diffHours}h`;
+    if (diffDays === 1) return 'Hier';
+    if (diffDays < 7) return `Il y a ${diffDays} jours`;
+    
+    return date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchDashboardData();
+    await fetchStats();
     setRefreshing(false);
-    toast.success('Données actualisées');
+    toast.success('Statistiques actualisées');
   };
 
   const handleLogout = () => {
@@ -91,32 +235,12 @@ const PatientDashboard = () => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: '2-digit',
-      month: 'long',
-      year: 'numeric',
+      month: 'short',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const getStatusBadge = (statut) => {
-    const statusConfig = {
-      planifie: { label: 'Planifié', color: '#2196F3', icon: <MdSchedule /> },
-      confirme: { label: 'Confirmé', color: '#4CAF50', icon: <MdCheckCircle /> },
-      termine: { label: 'Terminé', color: '#9E9E9E', icon: <MdCheckCircle /> },
-      annule: { label: 'Annulé', color: '#F44336', icon: <MdCancel /> }
-    };
-    
-    const config = statusConfig[statut] || statusConfig.planifie;
-    
-    return (
-      <span className="status-badge" style={{ backgroundColor: config.color }}>
-        {config.icon}
-        {config.label}
-      </span>
-    );
-  };
-
-  // Navigation items
   const getNavigationItems = () => {
     return [
       {
@@ -126,18 +250,32 @@ const PatientDashboard = () => {
         ]
       },
       {
-        section: 'Mon Espace',
+        section: 'Mon Suivi Médical',
         items: [
-          { path: '/my-appointments', icon: <MdCalendarToday />, text: 'Mes RDV', badge: upcomingAppointments.length },
-          { path: '/my-consultations', icon: <FaStethoscope />, text: 'Consultations' },
-          { path: '/my-prescriptions', icon: <FaPrescription />, text: 'Ordonnances' },
-          { path: '/my-documents', icon: <FaFileMedical />, text: 'Documents' }
+          { 
+            path: '/appointments', 
+            icon: <MdCalendarToday />, 
+            text: 'Mes Rendez-vous', 
+            badge: stats?.appointments?.upcoming || 0 
+          },
+          { path: '/consultations', icon: <MdLocalHospital />, text: 'Mes Consultations' },
+          { 
+            path: '/my-prescriptions', 
+            icon: <MdMedication />, 
+            text: 'Mes Ordonnances',
+            badge: stats?.prescriptions?.pending || 0
+          }
         ]
       },
       {
-        section: 'Mon Compte',
+        section: 'Finances',
         items: [
-          { path: '/my-profile', icon: <MdAccountCircle />, text: 'Mon Profil' }
+          { 
+            path: '/billing', 
+            icon: <MdPayment />, 
+            text: 'Mes Factures',
+            badge: stats?.invoices?.unpaid?.count || 0
+          }
         ]
       }
     ];
@@ -150,31 +288,56 @@ const PatientDashboard = () => {
     return (firstInitial + lastInitial).toUpperCase();
   };
 
+  const getPhotoUrl = () => {
+    if (user?.photo_profil) {
+      const baseURL = 'http://localhost:5000';
+      
+      if (user.photo_profil.startsWith('http')) {
+        return user.photo_profil;
+      }
+      
+      if (user.photo_profil.startsWith('/uploads')) {
+        return `${baseURL}${user.photo_profil}`;
+      }
+      
+      return `${baseURL}/uploads/profiles/${user.photo_profil}`;
+    }
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="dashboard-loading">
         <div className="spinner"></div>
-        <p>Chargement de votre espace patient...</p>
+        <p>Chargement du dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="dashboard-loading">
+        <p>Impossible de charger les statistiques</p>
+        <button onClick={fetchStats} className="refresh-btn">
+          <MdRefresh />
+          Réessayer
+        </button>
       </div>
     );
   }
 
   return (
     <>
-      {/* Sidebar Toggle Button */}
       <button className="sidebar-toggle" onClick={toggleSidebar}>
         {sidebarOpen ? <MdClose /> : <MdMenu />}
       </button>
 
-      {/* Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`}
         onClick={closeSidebar}
       ></div>
 
-      {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        {/* Sidebar Header */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <div className="logo-icon">
@@ -187,10 +350,22 @@ const PatientDashboard = () => {
           </div>
         </div>
 
-        {/* User Info */}
         <div className="sidebar-user">
           <div className="user-info">
-            <div className="user-avatar">{getUserInitials()}</div>
+            <div className="user-avatar-container">
+              {getPhotoUrl() ? (
+                <img 
+                  src={getPhotoUrl()} 
+                  alt="Photo de profil" 
+                  className="user-avatar-image"
+                />
+              ) : (
+                <div className="user-avatar">
+                  {getUserInitials()}
+                </div>
+              )}
+            </div>
+
             <div className="user-details">
               <p className="user-name">
                 {user?.prenom} {user?.nom}
@@ -200,7 +375,6 @@ const PatientDashboard = () => {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="sidebar-nav">
           {getNavigationItems().map((section, sectionIndex) => (
             <div key={sectionIndex} className="nav-section">
@@ -228,7 +402,6 @@ const PatientDashboard = () => {
           ))}
         </nav>
 
-        {/* Sidebar Footer */}
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout}>
             <MdLogout />
@@ -237,24 +410,131 @@ const PatientDashboard = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="main-content">
         <div className="patient-dashboard">
-          {/* Header */}
+          {/* Header avec notifications */}
           <div className="dashboard-header">
             <div className="header-content">
-              <h1>Mon Espace Patient</h1>
+              <h1>Mon Tableau de Bord</h1>
               <p>Bienvenue, {user?.prenom} {user?.nom}</p>
             </div>
-            <button 
-              className="refresh-btn"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <MdRefresh className={refreshing ? 'spinning' : ''} />
-              Actualiser
-            </button>
+            
+            <div className="header-actions">
+              {/* Bouton Notifications */}
+              <button 
+                className="notification-btn"
+                onClick={() => setShowNotifications(!showNotifications)}
+                title="Notifications"
+              >
+                {unreadCount > 0 ? <MdNotificationsActive /> : <MdNotifications />}
+                {unreadCount > 0 && (
+                  <span className="notification-badge">{unreadCount}</span>
+                )}
+              </button>
+
+              <button 
+                className="refresh-btn"
+                onClick={handleRefresh}
+                disabled={refreshing}
+              >
+                <MdRefresh className={refreshing ? 'spinning' : ''} />
+                Actualiser
+              </button>
+            </div>
           </div>
+
+          {/* Panneau de notifications */}
+          {showNotifications && (
+            <>
+              <div 
+                className="notifications-overlay" 
+                onClick={() => setShowNotifications(false)} 
+              />
+              <div className="notifications-panel">
+                <div className="notifications-header">
+                  <div className="header-title">
+                    <MdNotifications />
+                    <h2>Notifications</h2>
+                    {unreadCount > 0 && (
+                      <span className="unread-badge">{unreadCount}</span>
+                    )}
+                  </div>
+                  <div className="header-actions">
+                    {notifications.length > 0 && unreadCount > 0 && (
+                      <button
+                        className="btn-icon"
+                        onClick={handleMarkAllAsRead}
+                        title="Tout marquer comme lu"
+                      >
+                        <MdDoneAll />
+                      </button>
+                    )}
+                    <button
+                      className="btn-icon"
+                      onClick={() => setShowNotifications(false)}
+                      title="Fermer"
+                    >
+                      <MdClose />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="notifications-body">
+                  {loadingNotifications ? (
+                    <div className="notifications-loading">
+                      <div className="spinner"></div>
+                      <p>Chargement...</p>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="notifications-empty">
+                      <MdNotificationsNone className="empty-icon" />
+                      <p>Aucune notification</p>
+                    </div>
+                  ) : (
+                    <div className="notifications-list">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
+                          onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
+                        >
+                          <div
+                            className="notification-icon"
+                            style={{ backgroundColor: getNotificationColor(notification.type) }}
+                          >
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          
+                          <div className="notification-content">
+                            <h3 className="notification-title">{notification.title}</h3>
+                            <p className="notification-message">{notification.message}</p>
+                            <span className="notification-time">
+                              {formatNotificationDate(notification.created_at)}
+                            </span>
+                          </div>
+
+                          <button
+                            className="notification-delete"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNotification(notification.id);
+                            }}
+                            title="Supprimer"
+                          >
+                            <MdDelete />
+                          </button>
+
+                          {!notification.is_read && (
+                            <div className="unread-indicator"></div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Stats Cards */}
           <div className="stats-grid">
@@ -263,272 +543,264 @@ const PatientDashboard = () => {
                 <MdCalendarToday />
               </div>
               <div className="stat-content">
-                <h3>Prochains RDV</h3>
-                <p className="stat-value">{upcomingAppointments.length}</p>
-                <span className="stat-label">Rendez-vous planifiés</span>
+                <h3>RDV à Venir</h3>
+                <p className="stat-value">{stats?.appointments?.upcoming || 0}</p>
+                <span className="stat-label">
+                  {stats?.appointments?.month || 0} ce mois
+                </span>
               </div>
             </div>
 
             <div className="stat-card stat-success">
               <div className="stat-icon">
-                <FaStethoscope />
+                <MdLocalHospital />
               </div>
               <div className="stat-content">
                 <h3>Consultations</h3>
-                <p className="stat-value">{stats?.totalConsultations || 0}</p>
-                <span className="stat-label">Historique complet</span>
-              </div>
-            </div>
-
-            <div className="stat-card stat-warning">
-              <div className="stat-icon">
-                <FaPrescription />
-              </div>
-              <div className="stat-content">
-                <h3>Ordonnances</h3>
-                <p className="stat-value">{stats?.totalPrescriptions || 0}</p>
-                <span className="stat-label">Ordonnances actives</span>
+                <p className="stat-value">{stats?.consultations?.total || 0}</p>
+                <span className="stat-label">
+                  Total consultations
+                </span>
               </div>
             </div>
 
             <div className="stat-card stat-info">
               <div className="stat-icon">
-                <FaFileMedical />
+                <MdMedication />
               </div>
               <div className="stat-content">
-                <h3>Documents</h3>
-                <p className="stat-value">{stats?.totalDocuments || 0}</p>
-                <span className="stat-label">Documents médicaux</span>
+                <h3>Ordonnances</h3>
+                <p className="stat-value">{stats?.prescriptions?.total || 0}</p>
+                <span className="stat-label">
+                  {stats?.prescriptions?.pending || 0} en attente
+                </span>
+              </div>
+            </div>
+
+            <div className="stat-card stat-warning">
+              <div className="stat-icon">
+                <MdPayment />
+              </div>
+              <div className="stat-content">
+                <h3>Factures Impayées</h3>
+                <p className="stat-value">{stats?.invoices?.unpaid?.count || 0}</p>
+                <span className="stat-label">
+                  {stats?.invoices?.unpaid?.montant?.toFixed(2) || 0} MAD
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Main Content Grid */}
+          {/* Dashboard Content */}
           <div className="dashboard-row">
             {/* Prochains Rendez-vous */}
             <div className="dashboard-card">
               <div className="card-header">
-                <h2>
-                  <MdCalendarToday />
-                  Mes Prochains Rendez-vous
-                </h2>
+                <h2>Mes Prochains Rendez-vous</h2>
                 <button 
-                  className="btn-primary"
-                  onClick={() => navigate('/book-appointment')}
+                  className="view-all-btn"
+                  onClick={() => navigate('/appointments')}
                 >
-                  <MdAdd />
-                  Nouveau RDV
+                  Voir tout
+                  <MdChevronRight />
                 </button>
               </div>
               <div className="card-body">
-                {upcomingAppointments.length > 0 ? (
-                  <div className="appointments-list">
-                    {upcomingAppointments.map((apt) => (
-                      <div key={apt.id} className="appointment-card">
-                        <div className="appointment-date">
-                          <div className="date-icon">
-                            <MdCalendarToday />
-                          </div>
-                          <div className="date-info">
-                            <span className="date">
-                              {new Date(apt.date_heure).toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'short'
-                              })}
-                            </span>
-                            <span className="time">
-                              {new Date(apt.date_heure).toLocaleTimeString('fr-FR', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          </div>
+                <div className="appointments-list">
+                  {stats?.appointments?.upcomingDetails && stats.appointments.upcomingDetails.length > 0 ? (
+                    stats.appointments.upcomingDetails.map((apt) => (
+                      <div key={apt.id} className="appointment-item">
+                        <div className="appointment-time">
+                          <MdCalendarToday />
+                          <span>{formatDate(apt.date_heure)}</span>
                         </div>
-                        
                         <div className="appointment-details">
-                          <div className="doctor-info">
-                            <div className="doctor-avatar">
-                              <MdPerson />
-                            </div>
-                            <div className="doctor-details">
-                              <h4>Dr. {apt.medecin_nom} {apt.medecin_prenom}</h4>
-                              <span className="specialty">{apt.specialite}</span>
-                            </div>
+                          <div className="appointment-doctor">
+                            <MdPerson />
+                            <span>Dr. {apt.medecin_nom} {apt.medecin_prenom}</span>
                           </div>
-                          
-                          {apt.motif && (
-                            <div className="appointment-reason">
-                              <strong>Motif:</strong> {apt.motif}
-                            </div>
-                          )}
-                          
-                          <div className="appointment-footer">
-                            {getStatusBadge(apt.statut)}
-                            <button 
-                              className="btn-link"
-                              onClick={() => navigate(`/my-appointments/${apt.id}`)}
-                            >
-                              Détails <MdChevronRight />
-                            </button>
+                          <div className="appointment-specialty">
+                            {apt.specialite}
+                          </div>
+                          <div className="appointment-motif">
+                            {apt.motif || 'Consultation générale'}
                           </div>
                         </div>
+                        <span className={`appointment-status status-${apt.statut}`}>
+                          {apt.statut}
+                        </span>
                       </div>
-                    ))}
+                    ))
+                  ) : (
+                    <div className="empty-message">
+                      <MdCalendarToday />
+                      <p>Aucun rendez-vous à venir</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Dernière Consultation */}
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Dernière Consultation</h2>
+              </div>
+              <div className="card-body">
+                {stats?.consultations?.last ? (
+                  <div className="last-consultation">
+                    <div className="consultation-doctor">
+                      <div className="doctor-avatar">
+                        <FaHeartbeat />
+                      </div>
+                      <div className="doctor-info">
+                        <h3>Dr. {stats.consultations.last.medecin_nom} {stats.consultations.last.medecin_prenom}</h3>
+                        <p className="specialty">{stats.consultations.last.specialite}</p>
+                      </div>
+                    </div>
+                    <div className="consultation-date">
+                      <MdCalendarToday />
+                      <span>{formatDate(stats.consultations.last.date_consultation)}</span>
+                    </div>
+                    {stats.consultations.last.diagnostic && (
+                      <div className="consultation-diagnostic">
+                        <h4>Diagnostic:</h4>
+                        <p>{stats.consultations.last.diagnostic}</p>
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="empty-state">
-                    <MdCalendarToday className="empty-icon" />
-                    <p>Aucun rendez-vous à venir</p>
-                    <button 
-                      className="btn-primary"
-                      onClick={() => navigate('/book-appointment')}
-                    >
-                      <MdAdd />
-                      Prendre un rendez-vous
-                    </button>
+                  <div className="empty-message">
+                    <MdLocalHospital />
+                    <p>Aucune consultation enregistrée</p>
                   </div>
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Informations Patient */}
+          {/* Ordonnances Récentes et Rendez-vous par Statut */}
+          <div className="dashboard-row">
+            {/* Ordonnances Récentes */}
             <div className="dashboard-card">
               <div className="card-header">
+                <h2>Ordonnances Récentes</h2>
+                <button 
+                  className="view-all-btn"
+                  onClick={() => navigate('/my-prescriptions')}
+                >
+                  Voir tout
+                  <MdChevronRight />
+                </button>
+              </div>
+              <div className="card-body">
+                <div className="prescriptions-list">
+                  {stats?.prescriptions?.recent && stats.prescriptions.recent.length > 0 ? (
+                    stats.prescriptions.recent.map((prescription, index) => (
+                      <div key={index} className="prescription-item">
+                        <div className="prescription-icon">
+                          <MdMedication />
+                        </div>
+                        <div className="prescription-info">
+                          <div className="prescription-doctor">
+                            Dr. {prescription.medecin_nom} {prescription.medecin_prenom}
+                          </div>
+                          <div className="prescription-date">
+                            {formatDate(prescription.date_prescription)}
+                          </div>
+                          {prescription.diagnostic && (
+                            <div className="prescription-diagnostic">
+                              {prescription.diagnostic}
+                            </div>
+                          )}
+                        </div>
+                        <span className={`prescription-status status-${prescription.statut_paiement || 'en_attente'}`}>
+                          {prescription.statut_paiement === 'payee' ? 'Payée' : 'En attente'}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-message">
+                      <MdMedication />
+                      <p>Aucune ordonnance</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Rendez-vous par Statut */}
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Mes Rendez-vous par Statut</h2>
+              </div>
+              <div className="card-body">
+                {stats?.appointments?.byStatus && stats.appointments.byStatus.length > 0 ? (
+                  <div className="status-list">
+                    {stats.appointments.byStatus.map((item, index) => {
+                      const statusConfig = {
+                        planifie: { label: 'Planifiés', color: '#2196F3', icon: <MdSchedule /> },
+                        confirme: { label: 'Confirmés', color: '#388E3C', icon: <MdCheckCircle /> },
+                        en_cours: { label: 'En cours', color: '#FF9800', icon: <MdAccessTime /> },
+                        termine: { label: 'Terminés', color: '#4CAF50', icon: <MdCheckCircle /> },
+                        annule: { label: 'Annulés', color: '#F44336', icon: <MdCancel /> },
+                        non_presente: { label: 'Non présentés', color: '#9E9E9E', icon: <MdCancel /> }
+                      };
+
+                      const config = statusConfig[item.statut] || { label: item.statut, color: '#757575', icon: <MdSchedule /> };
+
+                      return (
+                        <div key={index} className="status-item">
+                          <div className="status-icon" style={{ color: config.color }}>
+                            {config.icon}
+                          </div>
+                          <div className="status-details">
+                            <span className="status-name">{config.label}</span>
+                            <span className="status-count">{item.count}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="empty-message">
+                    <p>Aucune donnée disponible</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Information Financière */}
+          {stats?.invoices?.unpaid?.count > 0 && (
+            <div className="dashboard-card financial-alert">
+              <div className="card-header">
                 <h2>
-                  <MdLocalHospital />
-                  Mes Informations
+                  <MdWarning />
+                  Factures en Attente
                 </h2>
               </div>
               <div className="card-body">
-                <div className="info-grid">
-                  <div className="info-item">
-                    <span className="info-label">N° Dossier</span>
-                    <span className="info-value">{stats?.patientInfo?.numero_dossier || 'N/A'}</span>
+                <div className="financial-summary">
+                  <div className="financial-item">
+                    <span className="label">Factures impayées:</span>
+                    <span className="value">{stats.invoices.unpaid.count}</span>
                   </div>
-                  
-                  <div className="info-item">
-                    <span className="info-label">Groupe Sanguin</span>
-                    <span className="info-value blood-type">
-                      {stats?.patientInfo?.groupe_sanguin || 'Non renseigné'}
-                    </span>
+                  <div className="financial-item">
+                    <span className="label">Montant total:</span>
+                    <span className="value highlight">{stats.invoices.unpaid.montant.toFixed(2)} MAD</span>
                   </div>
-                  
-                  <div className="info-item">
-                    <span className="info-label">Téléphone</span>
-                    <span className="info-value">{user?.telephone || 'Non renseigné'}</span>
-                  </div>
-                  
-                  <div className="info-item">
-                    <span className="info-label">Email</span>
-                    <span className="info-value">{user?.email}</span>
-                  </div>
+                  <button 
+                    className="btn-pay-now"
+                    onClick={() => navigate('/billing')}
+                  >
+                    <MdPayment />
+                    Voir mes factures
+                  </button>
                 </div>
-
-                <button 
-                  className="btn-outline full-width"
-                  onClick={() => navigate('/my-profile')}
-                >
-                  Modifier mes informations
-                </button>
               </div>
             </div>
-          </div>
-
-          {/* Dernières Consultations */}
-          <div className="dashboard-card">
-            <div className="card-header">
-              <h2>
-                <FaStethoscope />
-                Mes Dernières Consultations
-              </h2>
-              <button 
-                className="btn-link"
-                onClick={() => navigate('/my-consultations')}
-              >
-                Voir tout <MdChevronRight />
-              </button>
-            </div>
-            <div className="card-body">
-              {recentConsultations.length > 0 ? (
-                <div className="consultations-list">
-                  {recentConsultations.map((consult) => (
-                    <div key={consult.id} className="consultation-item">
-                      <div className="consultation-date">
-                        {formatDate(consult.date_consultation)}
-                      </div>
-                      <div className="consultation-doctor">
-                        Dr. {consult.medecin_nom} {consult.medecin_prenom}
-                      </div>
-                      <div className="consultation-diagnosis">
-                        {consult.diagnostic || 'Diagnostic non renseigné'}
-                      </div>
-                      <button 
-                        className="btn-link-small"
-                        onClick={() => navigate(`/my-consultations/${consult.id}`)}
-                      >
-                        Détails
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state-small">
-                  <FaStethoscope className="empty-icon" />
-                  <p>Aucune consultation récente</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Actions Rapides */}
-          <div className="dashboard-card">
-            <div className="card-header">
-              <h2>Actions Rapides</h2>
-            </div>
-            <div className="card-body">
-              <div className="quick-actions-grid">
-                <button 
-                  className="quick-action-btn"
-                  onClick={() => navigate('/book-appointment')}
-                >
-                  <div className="action-icon">
-                    <MdCalendarToday />
-                  </div>
-                  <span>Prendre RDV</span>
-                </button>
-
-                <button 
-                  className="quick-action-btn"
-                  onClick={() => navigate('/my-prescriptions')}
-                >
-                  <div className="action-icon">
-                    <FaPrescription />
-                  </div>
-                  <span>Ordonnances</span>
-                </button>
-
-                <button 
-                  className="quick-action-btn"
-                  onClick={() => navigate('/my-documents')}
-                >
-                  <div className="action-icon">
-                    <FaFileMedical />
-                  </div>
-                  <span>Documents</span>
-                </button>
-
-                <button 
-                  className="quick-action-btn"
-                  onClick={() => navigate('/my-profile')}
-                >
-                  <div className="action-icon">
-                    <MdPerson />
-                  </div>
-                  <span>Mon Profil</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </>
