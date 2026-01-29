@@ -114,7 +114,7 @@ exports.createPrescription = async (req, res) => {
       console.error('⚠️ Erreur notification patient:', notifError.message);
     }
 
-    // ⚠️ CORRECTION: Requête SQL simplifiée sans colonnes qui peuvent ne pas exister
+    // Récupérer l'ordonnance créée
     const prescription = await query(
       `SELECT 
         pr.*,
@@ -162,8 +162,6 @@ exports.createPrescription = async (req, res) => {
 // @desc    Obtenir toutes les ordonnances du médecin
 // @route   GET /api/prescriptions
 // @access  Private (medecin)
-// Remplacez juste cette partie dans getDoctorPrescriptions (ligne ~206-218):
-
 exports.getDoctorPrescriptions = async (req, res) => {
   try {
     const medecinId = req.user.id;
@@ -207,17 +205,15 @@ exports.getDoctorPrescriptions = async (req, res) => {
 
     const prescriptions = await query(sql, params);
 
-    // ✅ CORRECTION: Parser les médicaments JSON de manière robuste
+    // Parser les médicaments JSON de manière robuste
     const formattedPrescriptions = prescriptions.map(pr => {
       let medicaments = [];
       
       try {
         if (pr.medicaments) {
-          // Si c'est déjà un objet (pas une string)
           if (typeof pr.medicaments === 'object') {
             medicaments = pr.medicaments;
           } else {
-            // Si c'est une string, parser
             medicaments = JSON.parse(pr.medicaments);
           }
         }
@@ -652,6 +648,148 @@ exports.deletePrescription = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de l\'ordonnance',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Patient paie son ordonnance
+// @route   POST /api/prescriptions/:id/pay
+// @access  Private (patient)
+exports.payPrescription = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { montant, methode_paiement } = req.body;
+    const userId = req.user.id;
+
+    console.log('💳 Tentative de paiement:', { id, montant, methode_paiement, userId });
+
+    // Vérifier que l'ordonnance existe et appartient au patient
+    const prescriptionResult = await query(
+      `SELECT pr.*, p.user_id as patient_user_id
+       FROM prescriptions pr
+       INNER JOIN patients p ON pr.patient_id = p.id
+       WHERE pr.id = ?`,
+      [id]
+    );
+
+    if (!prescriptionResult || prescriptionResult.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ordonnance non trouvée'
+      });
+    }
+
+    const prescription = prescriptionResult[0];
+
+    // Vérifier que c'est bien le patient de cette ordonnance
+    if (prescription.patient_user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Accès non autorisé'
+      });
+    }
+
+    // Vérifier que l'ordonnance n'est pas déjà payée
+    if (prescription.statut === 'payee') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cette ordonnance a déjà été payée'
+      });
+    }
+
+    // Créer ou mettre à jour la facture
+    let invoiceId = prescription.invoice_id;
+
+    if (!invoiceId) {
+      // Créer une nouvelle facture
+      const numeroFacture = `FACT-ORD-${Date.now()}`;
+      
+      const invoiceResult = await query(
+        `INSERT INTO invoices 
+         (numero_facture, patient_id, montant_total, montant_paye, montant_restant, 
+          statut_paiement, description, type, date_emission, date_paiement, created_by)
+         VALUES (?, ?, ?, ?, 0, 'payee', ?, 'ordonnance', NOW(), NOW(), ?)`,
+        [
+          numeroFacture,
+          prescription.patient_id,
+          montant || 150, // Prix par défaut
+          montant || 150,
+          `Paiement ordonnance N° ${prescription.numero_ordonnance}`,
+          userId
+        ]
+      );
+
+      invoiceId = invoiceResult.insertId;
+
+      // Lier la facture à l'ordonnance
+      await query(
+        'UPDATE prescriptions SET invoice_id = ? WHERE id = ?',
+        [invoiceId, id]
+      );
+
+      console.log('✅ Facture créée:', invoiceId);
+    } else {
+      // Mettre à jour la facture existante
+      await query(
+        `UPDATE invoices 
+         SET statut_paiement = 'payee', 
+             montant_paye = montant_total,
+             montant_restant = 0,
+             date_paiement = NOW()
+         WHERE id = ?`,
+        [invoiceId]
+      );
+
+      console.log('✅ Facture mise à jour:', invoiceId);
+    }
+
+    // Mettre à jour le statut de l'ordonnance
+    await query(
+      'UPDATE prescriptions SET statut = \'payee\' WHERE id = ?',
+      [id]
+    );
+
+    // Enregistrer le paiement dans la table payments
+    await query(
+      `INSERT INTO payments 
+       (invoice_id, montant, methode_paiement, date_paiement, recu_par)
+       VALUES (?, ?, ?, NOW(), ?)`,
+      [invoiceId, montant || 150, methode_paiement || 'Carte bancaire', userId]
+    );
+
+    console.log('✅ Paiement enregistré');
+
+    // Créer une notification pour le patient
+    try {
+      await createNotification(
+        userId,
+        'payment_received',
+        'Paiement Confirmé',
+        `Votre paiement de ${montant || 150} MAD pour l'ordonnance N° ${prescription.numero_ordonnance} a été confirmé. Vous pouvez maintenant télécharger votre ordonnance signée.`,
+        id,
+        userId
+      );
+      console.log('✅ Notification envoyée');
+    } catch (notifError) {
+      console.error('⚠️ Erreur notification:', notifError);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Paiement enregistré avec succès',
+      data: {
+        prescription_id: id,
+        invoice_id: invoiceId,
+        montant_paye: montant || 150,
+        statut: 'payee'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erreur payPrescription:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du paiement',
       error: error.message
     });
   }

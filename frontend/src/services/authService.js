@@ -80,6 +80,42 @@ const authService = {
     }
   },
 
+  // ⭐⭐⭐ NOUVELLES MÉTHODES - RÉCUPÉRATION DE MOT DE PASSE ⭐⭐⭐
+  
+  // Demander la réinitialisation du mot de passe
+  forgotPassword: async (email) => {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Erreur lors de l\'envoi de l\'email' };
+    }
+  },
+
+  // Vérifier le code de réinitialisation
+  verifyResetCode: async (email, code) => {
+    try {
+      const response = await api.post('/auth/verify-reset-code', { email, code });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Code invalide ou expiré' };
+    }
+  },
+
+  // Réinitialiser le mot de passe
+  resetPassword: async (email, code, newPassword) => {
+    try {
+      const response = await api.post('/auth/reset-password', {
+        email,
+        code,
+        newPassword
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Erreur lors de la réinitialisation du mot de passe' };
+    }
+  },
+
   // Vérifier si l'utilisateur est connecté
   isAuthenticated: () => {
     const token = localStorage.getItem('token');

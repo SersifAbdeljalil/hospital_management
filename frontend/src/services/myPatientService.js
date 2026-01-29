@@ -14,7 +14,7 @@ const myPatientService = {
   // Obtenir un patient spécifique
   getMyPatientById: async (id) => {
     try {
-      // ✅ CORRECT: Parenthèses puis backticks
+      // ✅ CORRECTION: Template string correct
       const response = await api.get(`/my-patients/${id}`);
       return response.data;
     } catch (error) {

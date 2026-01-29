@@ -138,7 +138,6 @@ const AdminDashboard = () => {
         {
           section: 'Gestion',
           items: [
-            { path: '/users', icon: <MdPeople />, text: 'Utilisateurs', badge: 5 },
             { path: '/patients', icon: <MdLocalHospital />, text: 'Patients' },
             { path: '/doctors', icon: <FaUserMd />, text: 'Médecins' },
             { path: '/appointments', icon: <MdCalendarToday />, text: 'Rendez-vous' },

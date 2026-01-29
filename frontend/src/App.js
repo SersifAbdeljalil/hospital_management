@@ -8,6 +8,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages Auth
 import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Pages Dashboards
 import AdminDashboard from './pages/AdminDashboard';
@@ -29,9 +32,10 @@ import Logs from './pages/Logs';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 
-// ⭐⭐⭐ NOUVELLES PAGES: ORDONNANCES ⭐⭐⭐
+// ⭐⭐⭐ PAGES ORDONNANCES ⭐⭐⭐
 import Prescriptions from './pages/Prescriptions';
 import MyPrescriptions from './pages/MyPrescriptions';
+import PrescriptionPayment from './pages/PrescriptionPayment';
 
 function App() {
   return (
@@ -39,8 +43,11 @@ function App() {
       <AuthProvider>
         <div className="App">
           <Routes>
-            {/* ========== ROUTE PUBLIQUE ========== */}
+            {/* ========== ROUTES PUBLIQUES ========== */}
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
 
             {/* ========== ROUTES ADMIN ========== */}
@@ -133,12 +140,21 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* ⭐ Ordonnances - Patient */}
+            {/* ⭐⭐⭐ ORDONNANCES PATIENT - NOUVELLES ROUTES ⭐⭐⭐ */}
             <Route
               path="/my-prescriptions"
               element={
                 <ProtectedRoute allowedRoles={['patient']}>
                   <MyPrescriptions />
+                </ProtectedRoute>
+              }
+            />
+            {/* ⭐ ROUTE DE PAIEMENT - NOUVEAU ⭐ */}
+            <Route
+              path="/prescriptions/:id/payment"
+              element={
+                <ProtectedRoute allowedRoles={['patient']}>
+                  <PrescriptionPayment />
                 </ProtectedRoute>
               }
             />

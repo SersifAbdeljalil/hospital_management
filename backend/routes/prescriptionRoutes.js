@@ -8,25 +8,27 @@ const {
   downloadPrescriptionPDF,
   createPrescriptionInvoice,
   updatePrescriptionPayment,
-  deletePrescription
+  deletePrescription,
+  payPrescription  // ← Importation ajoutée
 } = require('../controllers/prescriptionController');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
 
-// Routes pour les patients
+// ⭐ Routes pour les patients (doivent être en PREMIER)
 router.get('/my-prescriptions', protect, authorize('patient'), getMyPrescriptions);
 
-// Routes pour les médecins
+// ⭐ Routes pour les médecins
 router.get('/', protect, authorize('medecin'), getDoctorPrescriptions);
 router.post('/', protect, authorize('medecin'), createPrescription);
-router.delete('/:id', protect, authorize('medecin'), deletePrescription);
-router.post('/:id/invoice', protect, authorize('medecin'), createPrescriptionInvoice);
 
-// Routes partagées (médecin + patient)
-router.get('/:id', protect, authorize('medecin', 'patient'), getPrescriptionById);
+// ⭐⭐⭐ ROUTES SPÉCIFIQUES (AVANT les routes avec :id) ⭐⭐⭐
+router.post('/:id/invoice', protect, authorize('medecin'), createPrescriptionInvoice);
+router.post('/:id/pay', protect, authorize('patient'), payPrescription);  // ← Route de paiement
+router.put('/:id/payment', protect, authorize('admin', 'receptionniste'), updatePrescriptionPayment);
 router.get('/:id/pdf', protect, authorize('medecin', 'patient'), downloadPrescriptionPDF);
 
-// Routes pour admin/réceptionniste (gestion des paiements)
-router.put('/:id/payment', protect, authorize('admin', 'receptionniste'), updatePrescriptionPayment);
+// ⭐ Routes génériques avec :id (APRÈS les routes spécifiques)
+router.get('/:id', protect, authorize('medecin', 'patient'), getPrescriptionById);
+router.delete('/:id', protect, authorize('medecin'), deletePrescription);
 
 module.exports = router;

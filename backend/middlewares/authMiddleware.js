@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { query } = require('../config/database');
 require('dotenv').config();
 
 // Middleware pour protéger les routes
@@ -51,6 +52,24 @@ exports.protect = async (req, res, next) => {
         prenom: user.prenom
       };
 
+      // ✅ NOUVEAU: Si c'est un patient, récupérer son patient_id
+      if (user.role === 'patient') {
+        try {
+          const patientResult = await query(
+            'SELECT id FROM patients WHERE user_id = ?',
+            [user.id]
+          );
+          
+          if (patientResult && patientResult.length > 0) {
+            req.user.patient_id = patientResult[0].id;
+          } else {
+            console.warn(`⚠️ Utilisateur patient ${user.id} n'a pas d'entrée dans la table patients`);
+          }
+        } catch (patientError) {
+          console.error('Erreur lors de la récupération du patient_id:', patientError);
+        }
+      }
+
       next();
     } catch (error) {
       return res.status(401).json({
@@ -90,6 +109,22 @@ exports.optional = async (req, res, next) => {
             nom: user.nom,
             prenom: user.prenom
           };
+
+          // Si c'est un patient, récupérer son patient_id
+          if (user.role === 'patient') {
+            try {
+              const patientResult = await query(
+                'SELECT id FROM patients WHERE user_id = ?',
+                [user.id]
+              );
+              
+              if (patientResult && patientResult.length > 0) {
+                req.user.patient_id = patientResult[0].id;
+              }
+            } catch (patientError) {
+              console.error('Erreur lors de la récupération du patient_id:', patientError);
+            }
+          }
         }
       } catch (error) {
         // Token invalide, continuer sans user
@@ -99,6 +134,51 @@ exports.optional = async (req, res, next) => {
     next();
   } catch (error) {
     next();
+  }
+};
+
+// ✅ NOUVEAU: Middleware pour s'assurer que le patient_id existe
+exports.ensurePatientId = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Non autorisé'
+      });
+    }
+
+    // Si patient_id est déjà défini, continuer
+    if (req.user.patient_id) {
+      return next();
+    }
+
+    // Si c'est un patient, récupérer son patient_id
+    if (req.user.role === 'patient') {
+      const patientResult = await query(
+        'SELECT id FROM patients WHERE user_id = ?',
+        [req.user.id]
+      );
+
+      if (!patientResult || patientResult.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Profil patient non trouvé. Veuillez contacter l\'administrateur pour créer votre dossier patient.'
+        });
+      }
+
+      req.user.patient_id = patientResult[0].id;
+      next();
+    } else {
+      // Si ce n'est pas un patient, continuer normalement
+      next();
+    }
+  } catch (error) {
+    console.error('Erreur ensurePatientId:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: error.message
+    });
   }
 };
 

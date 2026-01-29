@@ -41,13 +41,13 @@ const myAppointmentService = {
     }
   },
 
-  // ⭐ NOUVELLE MÉTHODE : Télécharger le PDF
+  // Télécharger le PDF
   downloadAppointmentPDF: async (id) => {
     try {
       const response = await api.get(`/my-appointments/${id}/pdf`, {
         responseType: 'blob'
       });
-
+      
       // Créer un URL temporaire pour le blob
       const url = window.URL.createObjectURL(new Blob([response.data]));
       
@@ -63,7 +63,7 @@ const myAppointmentService = {
       // Nettoyer
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
-
+      
       return { success: true };
     } catch (error) {
       throw error.response?.data || { message: 'Erreur lors du téléchargement du PDF' };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import appointmentService from '../services/appointmentService';
 import patientService from '../services/patientService';
-import doctorService from '../services/doctorService'; // ⭐ AJOUT
+import doctorService from '../services/doctorService';
 import useAuth from '../hooks/useAuth';
 import {
   MdAdd,
@@ -34,7 +34,7 @@ const Appointments = () => {
   const [modalMode, setModalMode] = useState('create');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [viewMode, setViewMode] = useState('list'); // list ou calendar
+  const [viewMode, setViewMode] = useState('list');
   
   const [formData, setFormData] = useState({
     patient_id: '',
@@ -49,15 +49,22 @@ const Appointments = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Charger les données au montage
+  // ✅ Charger les données au montage
   useEffect(() => {
     fetchAppointments();
+    
+    // Charger les patients seulement si ce n'est pas un patient
     if (user?.role !== 'patient') {
       fetchPatients();
     }
-    if (user?.role === 'admin' || user?.role === 'receptionniste') {
-      fetchDoctors();
-    }
+    
+    // Charger les médecins pour TOUS les rôles (y compris patients)
+    fetchDoctors();
+  }, [user]); // ✅ CORRECTION: Dépendance user au lieu de filterStatus
+
+  // ✅ Effet séparé pour le filtre
+  useEffect(() => {
+    fetchAppointments();
   }, [filterStatus]);
 
   // Récupérer les rendez-vous
@@ -71,10 +78,11 @@ const Appointments = () => {
 
       const response = await appointmentService.getAllAppointments(params);
       if (response.success) {
-        setAppointments(response.data);
+        setAppointments(response.data || []);
       }
     } catch (error) {
-      toast.error(error.message || 'Erreur lors du chargement');
+      console.error('Erreur chargement rendez-vous:', error);
+      toast.error(error.message || 'Erreur lors du chargement des rendez-vous');
     } finally {
       setLoading(false);
     }
@@ -85,51 +93,59 @@ const Appointments = () => {
     try {
       const response = await patientService.getAllPatients({ limit: 1000 });
       if (response.success) {
-        setPatients(response.data);
+        setPatients(response.data || []);
       }
     } catch (error) {
       console.error('Erreur chargement patients:', error);
+      toast.error('Impossible de charger les patients');
     }
   };
 
-  // ⭐⭐⭐ FONCTION CORRIGÉE - Récupérer les médecins ⭐⭐⭐
+  // ✅ Récupérer les médecins pour TOUS les rôles
   const fetchDoctors = async () => {
     try {
-      console.log('📞 Appel fetchDoctors...');
+      console.log('📞 Chargement des médecins pour le rôle:', user?.role);
       
-      // ✅ Utiliser getAllDoctors avec une grande limite pour récupérer tous les médecins
       const response = await doctorService.getAllDoctors({ 
-        limit: 1000, // Grande limite pour obtenir tous les médecins
-        statut: 'actif' // Optionnel : ne récupérer que les médecins actifs
+        limit: 1000,
+        statut: 'actif'
       });
       
-      console.log('📊 Réponse API doctors:', response);
+      console.log('📊 Réponse API médecins:', response);
       
-      if (response.success) {
-        console.log('✅ Médecins récupérés:', response.data.length);
+      if (response.success && Array.isArray(response.data)) {
+        console.log(`✅ ${response.data.length} médecin(s) chargé(s)`);
         setDoctors(response.data);
       } else {
-        console.error('❌ Échec de récupération des médecins');
-        toast.error('Erreur lors du chargement des médecins');
+        console.warn('⚠️ Format de réponse inattendu:', response);
+        setDoctors([]);
       }
     } catch (error) {
       console.error('❌ Erreur chargement médecins:', error);
-      toast.error(error.message || 'Erreur lors du chargement des médecins');
+      toast.error('Impossible de charger la liste des médecins');
+      setDoctors([]);
     }
   };
 
   // Charger les créneaux disponibles
   const fetchAvailableSlots = async (medecin_id, date) => {
-    if (!medecin_id || !date) return;
+    if (!medecin_id || !date) {
+      setAvailableSlots([]);
+      return;
+    }
 
     setLoadingSlots(true);
     try {
       const response = await appointmentService.getAvailability(medecin_id, date);
-      if (response.success) {
+      if (response.success && Array.isArray(response.slots)) {
         setAvailableSlots(response.slots);
+      } else {
+        setAvailableSlots([]);
       }
     } catch (error) {
-      toast.error('Erreur lors du chargement des créneaux');
+      console.error('Erreur créneaux:', error);
+      toast.error('Erreur lors du chargement des créneaux disponibles');
+      setAvailableSlots([]);
     } finally {
       setLoadingSlots(false);
     }
@@ -142,7 +158,7 @@ const Appointments = () => {
     
     if (mode === 'create') {
       setFormData({
-        patient_id: user?.role === 'patient' ? user.id : '',
+        patient_id: user?.role === 'patient' ? (user.patient_id || '') : '',
         medecin_id: user?.role === 'medecin' ? user.id : '',
         date: '',
         time: '',
@@ -157,11 +173,11 @@ const Appointments = () => {
       const time = datetime.toTimeString().slice(0, 5);
       
       setFormData({
-        patient_id: appointment.patient_id,
-        medecin_id: appointment.medecin_id,
+        patient_id: appointment.patient_id || '',
+        medecin_id: appointment.medecin_id || '',
         date,
         time,
-        duree: appointment.duree,
+        duree: appointment.duree || 30,
         motif: appointment.motif || '',
         notes: appointment.notes || ''
       });
@@ -209,34 +225,36 @@ const Appointments = () => {
       const datetime = `${formData.date} ${formData.time}:00`;
 
       const appointmentData = {
-        patient_id: formData.patient_id,
-        medecin_id: formData.medecin_id,
+        patient_id: parseInt(formData.patient_id),
+        medecin_id: parseInt(formData.medecin_id),
         date_heure: datetime,
         duree: parseInt(formData.duree),
-        motif: formData.motif,
-        notes: formData.notes
+        motif: formData.motif.trim(),
+        notes: formData.notes.trim()
       };
 
+      let response;
       if (modalMode === 'create') {
-        const response = await appointmentService.createAppointment(appointmentData);
+        response = await appointmentService.createAppointment(appointmentData);
         if (response.success) {
-          toast.success('Rendez-vous créé avec succès');
+          toast.success('✅ Rendez-vous créé avec succès');
           fetchAppointments();
           closeModal();
         }
       } else if (modalMode === 'edit') {
-        const response = await appointmentService.updateAppointment(
+        response = await appointmentService.updateAppointment(
           selectedAppointment.id,
           appointmentData
         );
         if (response.success) {
-          toast.success('Rendez-vous mis à jour avec succès');
+          toast.success('✅ Rendez-vous mis à jour avec succès');
           fetchAppointments();
           closeModal();
         }
       }
     } catch (error) {
-      toast.error(error.message || 'Une erreur est survenue');
+      console.error('Erreur soumission:', error);
+      toast.error(error.message || 'Une erreur est survenue lors de l\'enregistrement');
     } finally {
       setLoading(false);
     }
@@ -255,6 +273,7 @@ const Appointments = () => {
         fetchAppointments();
       }
     } catch (error) {
+      console.error('Erreur annulation:', error);
       toast.error(error.message || 'Erreur lors de l\'annulation');
     }
   };
@@ -268,7 +287,8 @@ const Appointments = () => {
         fetchAppointments();
       }
     } catch (error) {
-      toast.error(error.message || 'Erreur lors de la mise à jour');
+      console.error('Erreur changement statut:', error);
+      toast.error(error.message || 'Erreur lors de la mise à jour du statut');
     }
   };
 
@@ -295,18 +315,25 @@ const Appointments = () => {
 
   // Formater la date/heure
   const formatDateTime = (datetime) => {
-    const date = new Date(datetime);
-    return {
-      date: date.toLocaleDateString('fr-FR', { 
-        day: '2-digit', 
-        month: 'short', 
-        year: 'numeric' 
-      }),
-      time: date.toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
-    };
+    if (!datetime) return { date: 'N/A', time: 'N/A' };
+    
+    try {
+      const date = new Date(datetime);
+      return {
+        date: date.toLocaleDateString('fr-FR', { 
+          day: '2-digit', 
+          month: 'short', 
+          year: 'numeric' 
+        }),
+        time: date.toLocaleTimeString('fr-FR', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+      };
+    } catch (error) {
+      console.error('Erreur formatage date:', error);
+      return { date: 'N/A', time: 'N/A' };
+    }
   };
 
   // Filtrer les rendez-vous affichés
@@ -314,6 +341,20 @@ const Appointments = () => {
     if (filterStatus === 'all') return true;
     return apt.statut === filterStatus;
   });
+
+  // ✅ Vérifier si l'utilisateur peut modifier
+  const canEdit = (appointment) => {
+    if (!appointment) return false;
+    if (appointment.statut === 'termine' || appointment.statut === 'annule') return false;
+    return user?.role === 'admin' || user?.role === 'receptionniste' || user?.role === 'medecin';
+  };
+
+  // ✅ Vérifier si l'utilisateur peut changer le statut
+  const canChangeStatus = (appointment) => {
+    if (!appointment) return false;
+    if (appointment.statut === 'termine' || appointment.statut === 'annule') return false;
+    return user?.role === 'admin' || user?.role === 'medecin' || user?.role === 'receptionniste';
+  };
 
   return (
     <div className="appointments-page">
@@ -325,15 +366,13 @@ const Appointments = () => {
         </div>
         
         <div className="header-actions">
-          {(user?.role !== 'patient' || user?.role === 'patient') && (
-            <button 
-              className="btn-primary"
-              onClick={() => openModal('create')}
-            >
-              <MdAdd />
-              Nouveau Rendez-vous
-            </button>
-          )}
+          <button 
+            className="btn-primary"
+            onClick={() => openModal('create')}
+          >
+            <MdAdd />
+            Nouveau Rendez-vous
+          </button>
         </div>
       </div>
 
@@ -453,17 +492,15 @@ const Appointments = () => {
                         <MdVisibility />
                       </button>
 
-                      {appointment.statut !== 'termine' && appointment.statut !== 'annule' && (
+                      {canEdit(appointment) && (
                         <>
-                          {(user?.role === 'admin' || user?.role === 'receptionniste' || user?.role === 'medecin') && (
-                            <button
-                              className="btn-icon btn-edit"
-                              onClick={() => openModal('edit', appointment)}
-                              title="Modifier"
-                            >
-                              <MdEdit />
-                            </button>
-                          )}
+                          <button
+                            className="btn-icon btn-edit"
+                            onClick={() => openModal('edit', appointment)}
+                            title="Modifier"
+                          >
+                            <MdEdit />
+                          </button>
 
                           <button
                             className="btn-icon btn-delete"
@@ -477,8 +514,7 @@ const Appointments = () => {
                     </div>
 
                     {/* Actions rapides de changement de statut */}
-                    {(user?.role === 'admin' || user?.role === 'medecin' || user?.role === 'receptionniste') && 
-                     appointment.statut !== 'termine' && appointment.statut !== 'annule' && (
+                    {canChangeStatus(appointment) && (
                       <div className="quick-actions">
                         {appointment.statut === 'planifie' && (
                           <button
@@ -539,12 +575,14 @@ const Appointments = () => {
                       <div className="detail-item">
                         <span className="detail-label">Date et Heure:</span>
                         <span className="detail-value">
-                          {new Date(selectedAppointment?.date_heure).toLocaleString('fr-FR')}
+                          {selectedAppointment?.date_heure 
+                            ? new Date(selectedAppointment.date_heure).toLocaleString('fr-FR')
+                            : 'N/A'}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Durée:</span>
-                        <span className="detail-value">{selectedAppointment?.duree} minutes</span>
+                        <span className="detail-value">{selectedAppointment?.duree || 'N/A'} minutes</span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Statut:</span>
@@ -564,14 +602,18 @@ const Appointments = () => {
                           {selectedAppointment?.patient_nom} {selectedAppointment?.patient_prenom}
                         </span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Téléphone:</span>
-                        <span className="detail-value">{selectedAppointment?.patient_telephone}</span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">N° Dossier:</span>
-                        <span className="detail-value">{selectedAppointment?.numero_dossier}</span>
-                      </div>
+                      {selectedAppointment?.patient_telephone && (
+                        <div className="detail-item">
+                          <span className="detail-label">Téléphone:</span>
+                          <span className="detail-value">{selectedAppointment.patient_telephone}</span>
+                        </div>
+                      )}
+                      {selectedAppointment?.numero_dossier && (
+                        <div className="detail-item">
+                          <span className="detail-label">N° Dossier:</span>
+                          <span className="detail-value">{selectedAppointment.numero_dossier}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -584,10 +626,12 @@ const Appointments = () => {
                           Dr. {selectedAppointment?.medecin_nom} {selectedAppointment?.medecin_prenom}
                         </span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Spécialité:</span>
-                        <span className="detail-value">{selectedAppointment?.specialite}</span>
-                      </div>
+                      {selectedAppointment?.specialite && (
+                        <div className="detail-item">
+                          <span className="detail-label">Spécialité:</span>
+                          <span className="detail-value">{selectedAppointment.specialite}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -611,6 +655,7 @@ const Appointments = () => {
                   <div className="form-section">
                     <h3>Informations du Rendez-vous</h3>
                     
+                    {/* ✅ Sélecteur de patient (sauf pour les patients) */}
                     {user?.role !== 'patient' && (
                       <div className="form-group">
                         <label>Patient <span className="required">*</span></label>
@@ -632,6 +677,7 @@ const Appointments = () => {
                       </div>
                     )}
 
+                    {/* ✅ Sélecteur de médecin (pour TOUS sauf les médecins) */}
                     {user?.role !== 'medecin' && (
                       <div className="form-group">
                         <label>Médecin <span className="required">*</span></label>
@@ -651,10 +697,10 @@ const Appointments = () => {
                             </option>
                           ))}
                         </select>
-                        {/* ⭐ INDICATEUR DE DEBUG */}
+                        {/* Indicateur de debug */}
                         {doctors.length === 0 && (
-                          <small style={{ color: '#999', marginTop: '5px', display: 'block' }}>
-                            Chargement des médecins...
+                          <small style={{ color: '#F44336', marginTop: '5px', display: 'block' }}>
+                            ⚠️ Aucun médecin disponible
                           </small>
                         )}
                         {doctors.length > 0 && (
@@ -759,6 +805,7 @@ const Appointments = () => {
                       type="button"
                       className="btn-secondary"
                       onClick={closeModal}
+                      disabled={loading}
                     >
                       Annuler
                     </button>

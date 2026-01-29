@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : jeu. 29 jan. 2026 à 13:24
+-- Généré le : jeu. 29 jan. 2026 à 23:59
 -- Version du serveur : 10.4.32-MariaDB
 -- Version de PHP : 8.0.30
 
@@ -53,10 +53,11 @@ CREATE TABLE `appointments` (
 
 INSERT INTO `appointments` (`id`, `patient_id`, `medecin_id`, `date_heure`, `duree_minutes`, `statut`, `motif`, `type_consultation`, `notes`, `salle`, `rappel_envoye`, `created_by`, `created_at`, `updated_at`, `annule_at`, `annule_par`, `raison_annulation`) VALUES
 (1, 1, 2, '2026-02-05 09:00:00', 30, 'planifie', 'Consultation de suivi diabète', 'suivi', NULL, 'A101', 0, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21', NULL, NULL, NULL),
-(2, 1, 2, '2026-02-10 14:30:00', 30, 'planifie', 'Contrôle tension artérielle', 'controle', NULL, 'A102', 0, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21', NULL, NULL, NULL),
-(3, 2, 2, '2026-02-06 10:00:00', 30, 'confirme', 'Première consultation', 'premiere_visite', NULL, 'A103', 0, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21', NULL, NULL, NULL),
+(2, 1, 2, '2026-02-10 14:30:00', 30, 'confirme', 'Contrôle tension artérielle', 'controle', NULL, 'A102', 0, NULL, '2026-01-29 12:17:21', '2026-01-29 18:57:40', NULL, NULL, NULL),
+(3, 2, 2, '2026-02-06 10:00:00', 30, 'en_cours', 'Première consultation', 'premiere_visite', NULL, 'A103', 0, NULL, '2026-01-29 12:17:21', '2026-01-29 18:31:23', NULL, NULL, NULL),
 (4, 1, 2, '2026-01-20 11:00:00', 30, 'termine', 'Consultation générale', 'suivi', NULL, 'A101', 0, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21', NULL, NULL, NULL),
-(5, 2, 2, '2026-01-22 15:00:00', 30, 'termine', 'Bilan de santé', 'premiere_visite', NULL, 'A102', 0, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21', NULL, NULL, NULL);
+(5, 2, 2, '2026-01-22 15:00:00', 30, 'termine', 'Bilan de santé', 'premiere_visite', NULL, 'A102', 0, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21', NULL, NULL, NULL),
+(6, 3, 2, '2026-01-30 09:00:00', 30, 'planifie', 'ok', 'premiere_visite', 'ok', NULL, 0, NULL, '2026-01-29 18:57:36', '2026-01-29 18:57:36', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -121,7 +122,8 @@ CREATE TABLE `consultations` (
 
 INSERT INTO `consultations` (`id`, `appointment_id`, `patient_id`, `medecin_id`, `date_consultation`, `motif_consultation`, `temperature`, `tension_arterielle_systolique`, `tension_arterielle_diastolique`, `frequence_cardiaque`, `frequence_respiratoire`, `poids`, `taille`, `imc`, `saturation_oxygene`, `examen_clinique`, `symptomes`, `diagnostic`, `diagnostic_code_cim10`, `observations`, `examens_demandes`, `traitement_propose`, `conduite_a_tenir`, `prochain_rdv_recommande`, `arret_travail_jours`, `statut`, `created_at`, `updated_at`) VALUES
 (1, 4, 1, 2, '2026-01-20 11:00:00', 'Consultation de suivi diabète', 36.8, 140, 90, NULL, NULL, 78.50, 175, NULL, NULL, NULL, NULL, 'Diabète type 2 contrôlé, ajustement traitement recommandé', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'terminee', '2026-01-29 12:17:21', '2026-01-29 12:17:21'),
-(2, 5, 2, 2, '2026-01-22 15:00:00', 'Bilan de santé annuel', 37.0, 120, 80, NULL, NULL, 72.00, 168, NULL, NULL, NULL, NULL, 'État de santé général bon, RAS', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'terminee', '2026-01-29 12:17:21', '2026-01-29 12:17:21');
+(2, 5, 2, 2, '2026-01-22 15:00:00', 'Bilan de santé annuel', 37.0, 120, 80, NULL, NULL, 72.00, 168, NULL, NULL, NULL, NULL, 'État de santé général bon, RAS', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'terminee', '2026-01-29 12:17:21', '2026-01-29 12:17:21'),
+(3, NULL, 3, 2, '2026-01-29 19:00:00', 'ok', 0.0, 0, 0, 0, 0, 0.00, 0, NULL, 0, '', '', '', '', '', '', '', '', '0000-00-00', 0, 'en_cours', '2026-01-29 19:00:55', '2026-01-29 19:00:55');
 
 -- --------------------------------------------------------
 
@@ -189,7 +191,8 @@ CREATE TABLE `invoices` (
 
 INSERT INTO `invoices` (`id`, `numero_facture`, `consultation_id`, `patient_id`, `date_emission`, `date_echeance`, `montant_consultation`, `montant_actes`, `montant_examens`, `montant_total`, `montant_paye`, `montant_restant`, `taux_tva`, `montant_ht`, `montant_tva`, `montant_ttc`, `statut_paiement`, `methode_paiement`, `reference_paiement`, `date_paiement`, `prise_en_charge_assurance`, `numero_prise_en_charge`, `notes`, `pdf_path`, `description`, `type`, `statut`, `created_by`, `created_at`, `updated_at`) VALUES
 (1, 'FAC-2026-001', 1, 1, '2026-01-20', NULL, 300.00, 0.00, 0.00, 300.00, 300.00, 0.00, 0.00, NULL, NULL, NULL, 'payee', 'carte_bancaire', NULL, '2026-01-20 11:30:00', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21'),
-(2, 'FAC-2026-002', 2, 2, '2026-01-22', NULL, 250.00, 0.00, 0.00, 250.00, 0.00, 250.00, 0.00, NULL, NULL, NULL, 'non_payee', NULL, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21');
+(2, 'FAC-2026-002', 2, 2, '2026-01-22', NULL, 250.00, 0.00, 0.00, 250.00, 0.00, 250.00, 0.00, NULL, NULL, NULL, 'non_payee', NULL, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21'),
+(3, 'FACT-ORD-1769719421340', NULL, 3, '2026-01-29', NULL, 0.00, 0.00, 0.00, 150.00, 150.00, 0.00, 0.00, NULL, NULL, NULL, 'payee', NULL, NULL, '2026-01-29 21:43:41', 0.00, NULL, NULL, NULL, 'Paiement ordonnance N° ORD-1769713801424-2', 'ordonnance', NULL, 4, '2026-01-29 20:43:41', '2026-01-29 20:43:41');
 
 -- --------------------------------------------------------
 
@@ -276,7 +279,11 @@ CREATE TABLE `notifications` (
 INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `message`, `related_id`, `sender_id`, `is_read`, `read_at`, `url_redirect`, `created_at`, `updated_at`) VALUES
 (1, 3, 'appointment', 'Rendez-vous confirmé', 'Votre rendez-vous du 05/02/2026 à 09:00 est confirmé', NULL, NULL, 0, NULL, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21'),
 (2, 2, 'new_patient', 'Nouveau patient', 'Un nouveau patient (Youssef El Idrissi) a pris rendez-vous', NULL, NULL, 1, NULL, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21'),
-(3, 3, 'invoice', 'Facture impayée', 'Vous avez une facture en attente de paiement (250 DH)', NULL, NULL, 0, NULL, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21');
+(3, 3, 'invoice', 'Facture impayée', 'Vous avez une facture en attente de paiement (250 DH)', NULL, NULL, 0, NULL, NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21'),
+(4, 4, 'appointment_created', 'Nouveau rendez-vous confirmé', 'Votre rendez-vous avec Dr. Bennani Fatima a été planifié pour le 30/01/2026 à 09:00', 6, 3, 1, NULL, NULL, '2026-01-29 18:57:36', '2026-01-29 19:03:53'),
+(5, 2, 'appointment_created', 'Nouveau rendez-vous', 'Un rendez-vous avec El Idrissi Youssef a été planifié pour le 30/01/2026 à 09:00', 6, 3, 1, NULL, NULL, '2026-01-29 18:57:36', '2026-01-29 18:58:34'),
+(6, 4, 'prescription_created', 'Nouvelle Ordonnance', 'Le Dr. Fatima Bennani vous a prescrit une nouvelle ordonnance. Paiement requis pour télécharger.', 2, 2, 1, NULL, NULL, '2026-01-29 19:10:01', '2026-01-29 19:10:28'),
+(7, 4, 'payment_received', 'Paiement Confirmé', 'Votre paiement de 150 MAD pour l\'ordonnance N° ORD-1769713801424-2 a été confirmé. Vous pouvez maintenant télécharger votre ordonnance signée.', 2, 4, 1, NULL, NULL, '2026-01-29 20:43:41', '2026-01-29 20:56:07');
 
 -- --------------------------------------------------------
 
@@ -307,7 +314,10 @@ CREATE TABLE `patients` (
 
 INSERT INTO `patients` (`id`, `user_id`, `numero_dossier`, `groupe_sanguin`, `numero_securite_sociale`, `contact_urgence_nom`, `contact_urgence_telephone`, `contact_urgence_relation`, `profession`, `situation_familiale`, `assurance_nom`, `assurance_numero`, `created_at`, `updated_at`) VALUES
 (1, 3, 'P-2024-001', 'A+', NULL, 'Sara El Idrissi', '+212645678901', 'Épouse', 'Ingénieur', 'marie', NULL, NULL, '2026-01-29 12:17:20', '2026-01-29 12:17:20'),
-(2, 3, 'P-2024-002', 'O+', NULL, 'Ahmed Tahiri', '+212656789012', 'Père', 'Professeur', 'celibataire', NULL, NULL, '2026-01-29 12:17:20', '2026-01-29 12:17:20');
+(2, 3, 'P-2024-002', 'O+', NULL, 'Ahmed Tahiri', '+212656789012', 'Père', 'Professeur', 'celibataire', NULL, NULL, '2026-01-29 12:17:20', '2026-01-29 12:17:20'),
+(3, 4, 'PAT-2026-1086', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-29 18:23:59', '2026-01-29 18:23:59'),
+(4, 5, 'PAT-2026-7368', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-29 21:41:06', '2026-01-29 21:41:06'),
+(5, 6, 'PAT-2026-5704', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-29 22:12:58', '2026-01-29 22:12:58');
 
 -- --------------------------------------------------------
 
@@ -332,7 +342,8 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`id`, `invoice_id`, `montant`, `methode_paiement`, `reference_transaction`, `date_paiement`, `notes`, `recu_par`, `created_at`) VALUES
-(1, 1, 300.00, 'carte_bancaire', NULL, '2026-01-20 11:30:00', NULL, 1, '2026-01-29 12:17:21');
+(1, 1, 300.00, 'carte_bancaire', NULL, '2026-01-20 11:30:00', NULL, NULL, '2026-01-29 12:17:21'),
+(2, 3, 150.00, '', NULL, '2026-01-29 21:43:41', NULL, 4, '2026-01-29 20:43:41');
 
 -- --------------------------------------------------------
 
@@ -364,7 +375,8 @@ CREATE TABLE `prescriptions` (
 --
 
 INSERT INTO `prescriptions` (`id`, `numero_ordonnance`, `consultation_id`, `patient_id`, `medecin_id`, `diagnostic`, `medicaments`, `instructions`, `duree_traitement`, `statut`, `invoice_id`, `date_creation`, `date_prescription`, `pdf_path`, `created_at`, `updated_at`) VALUES
-(1, 'ORD-2026-001', 1, 1, 2, 'Diabète Type 2', '[{\"nom\": \"Metformine\", \"dosage\": \"850mg\", \"posologie\": \"1 comprimé matin et soir\", \"duree\": \"3 mois\"}, {\"nom\": \"Glibenclamide\", \"dosage\": \"5mg\", \"posologie\": \"1 comprimé le matin\", \"duree\": \"3 mois\"}]', NULL, NULL, 'delivree', NULL, '2026-01-29 13:17:21', '2026-01-20', NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21');
+(1, 'ORD-2026-001', 1, 1, 2, 'Diabète Type 2', '[{\"nom\": \"Metformine\", \"dosage\": \"850mg\", \"posologie\": \"1 comprimé matin et soir\", \"duree\": \"3 mois\"}, {\"nom\": \"Glibenclamide\", \"dosage\": \"5mg\", \"posologie\": \"1 comprimé le matin\", \"duree\": \"3 mois\"}]', NULL, NULL, 'delivree', NULL, '2026-01-29 13:17:21', '2026-01-20', NULL, '2026-01-29 12:17:21', '2026-01-29 12:17:21'),
+(2, 'ORD-1769713801424-2', NULL, 3, 2, 'ok', '[{\"nom\":\"iuyfudiojfugvyewijodgfuy\",\"dosage\":\"500\",\"forme\":\"gélule\",\"posologie\":\"3edqegusgfd\",\"duree\":\"7 jour \"}]', 'kjhgjftdrsdtfyguhij', 'kjhgfdghjk', 'payee', 3, '2026-01-29 20:10:01', NULL, NULL, '2026-01-29 19:10:01', '2026-01-29 20:43:41');
 
 -- --------------------------------------------------------
 
@@ -434,6 +446,8 @@ CREATE TABLE `users` (
   `prenom` varchar(100) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `reset_password_token` varchar(255) DEFAULT NULL,
+  `reset_password_expire` datetime DEFAULT NULL,
   `role` enum('admin','medecin','infirmier','receptionniste','patient') NOT NULL,
   `telephone` varchar(20) DEFAULT NULL,
   `adresse` text DEFAULT NULL,
@@ -452,10 +466,12 @@ CREATE TABLE `users` (
 -- Déchargement des données de la table `users`
 --
 
-INSERT INTO `users` (`id`, `nom`, `prenom`, `email`, `password`, `role`, `telephone`, `adresse`, `date_naissance`, `sexe`, `statut`, `photo_profil`, `specialite`, `numero_licence`, `created_at`, `updated_at`, `last_login`) VALUES
-(1, 'El Idrissi', 'Youssef', 'patient@hospital.com', '$2b$10$drzR82clDJoetDWyMUzDxuWV05HZw/dumPcisSR6yFLFnbh1lQaJC', 'patient', '+212634567890', NULL, NULL, NULL, 'actif', NULL, NULL, NULL, '2026-01-29 12:16:16', '2026-01-29 12:21:50', '2026-01-29 12:21:50'),
-(2, 'Bennani', 'Fatima', 'docteur@hospital.com', '$2b$10$JOfHl91vpPzetgqr9502F.3vp/aKY06VmbPklJGm8HHQfQPz83kdG', 'medecin', '+212623456789', NULL, NULL, NULL, 'actif', NULL, NULL, NULL, '2026-01-29 12:16:25', '2026-01-29 12:21:08', '2026-01-29 12:21:08'),
-(3, 'Alami', 'Mohammed', 'admin@hospital.com', '$2b$10$6dxf/YOceXymW7PQ.MBzO.VPeSp/YD96hbnwXHL4DW15iOsVb0Yde', 'admin', '+212612345678', NULL, NULL, NULL, 'actif', NULL, NULL, NULL, '2026-01-29 12:16:30', '2026-01-29 12:18:33', '2026-01-29 12:18:33');
+INSERT INTO `users` (`id`, `nom`, `prenom`, `email`, `password`, `reset_password_token`, `reset_password_expire`, `role`, `telephone`, `adresse`, `date_naissance`, `sexe`, `statut`, `photo_profil`, `specialite`, `numero_licence`, `created_at`, `updated_at`, `last_login`) VALUES
+(2, 'Bennani', 'Fatima', 'docteur@hospital.com', '$2b$10$JOfHl91vpPzetgqr9502F.3vp/aKY06VmbPklJGm8HHQfQPz83kdG', NULL, NULL, 'medecin', '+212623456789', NULL, NULL, NULL, 'actif', '/uploads/profiles/user_2_1769713212821-266354587.jpg', NULL, NULL, '2026-01-29 12:16:25', '2026-01-29 21:32:23', '2026-01-29 21:32:23'),
+(3, 'Alami', 'Mohammed', 'admin@hospital.com', '$2b$10$6dxf/YOceXymW7PQ.MBzO.VPeSp/YD96hbnwXHL4DW15iOsVb0Yde', NULL, NULL, 'admin', '+212612345678', NULL, NULL, NULL, 'actif', NULL, NULL, NULL, '2026-01-29 12:16:30', '2026-01-29 22:56:54', '2026-01-29 22:56:54'),
+(4, 'El Idrissi', 'Youssef', 'patient@hospital.com', '$2b$10$sdvhbArVReq2zPWZ.v7L..5zIqXmsKegp1/UkOFith/LxiHFSB/gK', NULL, NULL, 'patient', '+212634567890', NULL, NULL, NULL, 'actif', NULL, NULL, NULL, '2026-01-29 18:23:59', '2026-01-29 21:20:51', '2026-01-29 21:20:51'),
+(5, 'sersif', 'Abdeljalil', 'abdosarsif28@gmail.com', '$2b$10$Gyf6nMQKS2xphD90guKBv.Q..PXRUgvt4V6ItSrwKAV73yDcbXIjO', NULL, NULL, 'patient', '0695489581', 'el jadida', '2002-11-28', 'M', 'actif', NULL, NULL, NULL, '2026-01-29 21:41:06', '2026-01-29 22:28:09', NULL),
+(6, 'sersif', 'abdo', 'mohammedlkhouaja@gmail.com', '$2b$10$bKuPwIVuGTaqFwAig2kZN.45mvHsWOXZ4yZ5SsBXClN6xy0Y3w6BO', 'PBT36J', '2026-01-29 22:28:05', 'patient', '0548251258', 'sidufydis', '2026-01-15', 'M', 'actif', NULL, NULL, NULL, '2026-01-29 22:12:58', '2026-01-29 22:13:05', NULL);
 
 --
 -- Index pour les tables déchargées
@@ -594,7 +610,8 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email` (`email`),
   ADD KEY `idx_email` (`email`),
   ADD KEY `idx_role` (`role`),
-  ADD KEY `idx_statut` (`statut`);
+  ADD KEY `idx_statut` (`statut`),
+  ADD KEY `idx_reset_password_token` (`reset_password_token`);
 
 --
 -- AUTO_INCREMENT pour les tables déchargées
@@ -604,7 +621,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT pour la table `appointments`
 --
 ALTER TABLE `appointments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT pour la table `audit_logs`
@@ -616,7 +633,7 @@ ALTER TABLE `audit_logs`
 -- AUTO_INCREMENT pour la table `consultations`
 --
 ALTER TABLE `consultations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT pour la table `documents`
@@ -628,7 +645,7 @@ ALTER TABLE `documents`
 -- AUTO_INCREMENT pour la table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT pour la table `invoice_items`
@@ -646,25 +663,25 @@ ALTER TABLE `medical_records`
 -- AUTO_INCREMENT pour la table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT pour la table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT pour la table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `prescriptions`
 --
 ALTER TABLE `prescriptions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `prescription_medications`
@@ -682,7 +699,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT pour la table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Contraintes pour les tables déchargées

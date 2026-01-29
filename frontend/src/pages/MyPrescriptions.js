@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import prescriptionService from '../services/Prescriptionservice';
 import useAuth from '../hooks/useAuth';
@@ -20,6 +21,7 @@ import './MyPrescriptions.css';
 
 const MyPrescriptions = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,16 +69,20 @@ const MyPrescriptions = () => {
 
   const handleDownloadPDF = async (id, statut) => {
     if (statut !== 'payee') {
-      toast.warning('Paiement requis pour télécharger cette ordonnance');
+      toast.warning('⚠️ Paiement requis pour télécharger cette ordonnance');
       return;
     }
 
     try {
       await prescriptionService.downloadPDF(id);
-      toast.success('PDF téléchargé avec succès');
+      toast.success('✅ PDF téléchargé avec succès');
     } catch (error) {
       toast.error(error.message || 'Erreur lors du téléchargement');
     }
+  };
+
+  const handlePayment = (prescriptionId) => {
+    navigate(`/prescriptions/${prescriptionId}/payment`);
   };
 
   const formatDate = (dateString) => {
@@ -121,7 +127,7 @@ const MyPrescriptions = () => {
     <div className="my-prescriptions-page">
       {/* Header */}
       <div className="page-header">
-        <div>
+        <div className="header-content">
           <h1>Mes Ordonnances</h1>
           <p>Consultez et téléchargez vos prescriptions médicales</p>
         </div>
@@ -195,12 +201,11 @@ const MyPrescriptions = () => {
                   </button>
                 ) : (
                   <button
-                    className="btn-payment-required"
-                    disabled
-                    title="Paiement requis"
+                    className="btn-payment"
+                    onClick={() => handlePayment(prescription.id)}
                   >
                     <MdPayment />
-                    Paiement requis
+                    Payer 150 MAD
                   </button>
                 )}
               </div>
@@ -301,14 +306,24 @@ const MyPrescriptions = () => {
                 </div>
               )}
 
-              {selectedPrescription.statut === 'en_attente' && selectedPrescription.montant_total && (
+              {selectedPrescription.statut === 'en_attente' && (
                 <div className="detail-section payment-section">
                   <h3><MdPayment /> Information de Paiement</h3>
                   <div className="payment-details">
-                    <p><strong>Montant à payer:</strong> {selectedPrescription.montant_total} MAD</p>
+                    <p><strong>Montant à payer:</strong> 150 MAD</p>
                     <p className="payment-note">
-                      Veuillez effectuer le paiement à la réception pour pouvoir télécharger cette ordonnance.
+                      Veuillez effectuer le paiement pour pouvoir télécharger cette ordonnance.
                     </p>
+                    <button
+                      className="btn-payment-modal"
+                      onClick={() => {
+                        setShowDetailsModal(false);
+                        handlePayment(selectedPrescription.id);
+                      }}
+                    >
+                      <MdPayment />
+                      Procéder au paiement
+                    </button>
                   </div>
                 </div>
               )}

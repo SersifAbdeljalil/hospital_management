@@ -7,19 +7,24 @@ exports.getPatientStats = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // 1. Récupérer l'ID du patient depuis user_id
-    const patientResult = await query(`
-      SELECT id FROM patients WHERE user_id = ?
-    `, [userId]);
+    // ✅ CORRECTION: Utiliser patient_id du middleware si disponible
+    let patientId = req.user.patient_id;
 
-    if (!patientResult || patientResult.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient non trouvé'
-      });
+    // Sinon, le récupérer de la base de données
+    if (!patientId) {
+      const patientResult = await query(`
+        SELECT id FROM patients WHERE user_id = ?
+      `, [userId]);
+
+      if (!patientResult || patientResult.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Profil patient non trouvé. Veuillez contacter l\'administrateur pour créer votre dossier patient.'
+        });
+      }
+
+      patientId = patientResult[0].id;
     }
-
-    const patientId = patientResult[0].id;
 
     // 2. Rendez-vous à venir
     const upcomingAppointmentsResult = await query(`
@@ -74,13 +79,9 @@ exports.getPatientStats = async (req, res) => {
     // 7. Ordonnances en attente de paiement
     const pendingPrescriptionsResult = await query(`
       SELECT COUNT(*) as count 
-      FROM prescriptions p
-      LEFT JOIN invoices i ON p.consultation_id = (
-        SELECT consultation_id FROM prescriptions WHERE id = p.id
-      )
-      WHERE p.patient_id = ?
-      AND (i.statut_paiement IS NULL OR i.statut_paiement IN ('non_payee', 'partiellement_payee'))
-      AND p.statut = 'active'
+      FROM prescriptions 
+      WHERE patient_id = ?
+      AND statut IN ('en_attente')
     `, [patientId]);
     const pendingPrescriptions = (pendingPrescriptionsResult && pendingPrescriptionsResult.length > 0) 
       ? pendingPrescriptionsResult[0].count : 0;
@@ -182,7 +183,9 @@ exports.getPatientStats = async (req, res) => {
       SELECT 
         p.id,
         p.date_prescription,
+        p.date_creation,
         p.statut,
+        p.numero_ordonnance,
         u.nom as medecin_nom,
         u.prenom as medecin_prenom,
         u.specialite,
@@ -192,9 +195,9 @@ exports.getPatientStats = async (req, res) => {
       FROM prescriptions p
       INNER JOIN users u ON p.medecin_id = u.id
       LEFT JOIN consultations c ON p.consultation_id = c.id
-      LEFT JOIN invoices i ON c.id = i.consultation_id
+      LEFT JOIN invoices i ON p.invoice_id = i.id
       WHERE p.patient_id = ?
-      ORDER BY p.date_prescription DESC
+      ORDER BY p.date_creation DESC
       LIMIT 5
     `, [patientId]);
 
@@ -214,6 +217,7 @@ exports.getPatientStats = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
+        patient_id: patientId, // ✅ Inclure le patient_id dans la réponse
         appointments: {
           upcoming: upcomingAppointments,
           month: appointmentsMonth,
@@ -283,7 +287,7 @@ exports.getPatientProfile = async (req, res) => {
     if (!result || result.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Profil patient non trouvé'
+        message: 'Profil patient non trouvé. Veuillez contacter l\'administrateur pour créer votre dossier patient.'
       });
     }
 

@@ -195,7 +195,7 @@ exports.createPatient = async (req, res) => {
 
     const user_id = userResult.insertId;
 
-    // Créer le patient
+    // ✅ CORRECTION: Créer le patient avec tous les champs
     const patientSql = `
       INSERT INTO patients (
         user_id, numero_dossier, groupe_sanguin, numero_securite_sociale,
@@ -207,26 +207,30 @@ exports.createPatient = async (req, res) => {
     const patientResult = await query(patientSql, [
       user_id,
       numero_dossier,
-      groupe_sanguin,
-      numero_securite_sociale,
-      contact_urgence_nom,
-      contact_urgence_telephone,
-      contact_urgence_relation,
-      profession,
-      situation_familiale,
-      assurance_nom,
-      assurance_numero
+      groupe_sanguin || null,
+      numero_securite_sociale || null,
+      contact_urgence_nom || null,
+      contact_urgence_telephone || null,
+      contact_urgence_relation || null,
+      profession || null,
+      situation_familiale || null,
+      assurance_nom || null,
+      assurance_numero || null
     ]);
+
+    const patient_id = patientResult.insertId;
 
     // Créer le dossier médical vide
     const medicalRecordSql = 'INSERT INTO medical_records (patient_id) VALUES (?)';
-    await query(medicalRecordSql, [patientResult.insertId]);
+    await query(medicalRecordSql, [patient_id]);
+
+    console.log(`✅ Patient créé: ID=${patient_id}, User_ID=${user_id}, Dossier=${numero_dossier}`);
 
     res.status(201).json({
       success: true,
       message: 'Patient créé avec succès',
       data: {
-        id: patientResult.insertId,
+        id: patient_id,
         user_id,
         numero_dossier
       }

@@ -1,99 +1,67 @@
 import api from './api';
 
 const prescriptionService = {
-  // ========== MÉDECIN ==========
-  
   // Créer une ordonnance
   createPrescription: async (data) => {
     try {
       const response = await api.post('/prescriptions', data);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Erreur lors de la création de l\'ordonnance' };
+      throw error.response?.data || { message: 'Erreur réseau' };
     }
   },
 
   // Obtenir toutes les ordonnances du médecin
-  getDoctorPrescriptions: async (filters = {}) => {
+  getDoctorPrescriptions: async (params = {}) => {
     try {
-      const params = new URLSearchParams();
-      if (filters.statut) params.append('statut', filters.statut);
-      if (filters.patient_id) params.append('patient_id', filters.patient_id);
-      if (filters.date_debut) params.append('date_debut', filters.date_debut);
-      if (filters.date_fin) params.append('date_fin', filters.date_fin);
-      
-      // ✅ CORRECT: Parenthèses puis backticks À L'INTÉRIEUR
-      const response = await api.get(`/prescriptions?${params.toString()}`);
+      const response = await api.get('/prescriptions', { params });
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Erreur lors de la récupération des ordonnances' };
+      throw error.response?.data || { message: 'Erreur réseau' };
     }
   },
 
-  // Créer une facture pour une ordonnance
-  createInvoice: async (prescriptionId, montant) => {
-    try {
-      // ✅ CORRECT: Parenthèses puis backticks À L'INTÉRIEUR
-      const response = await api.post(`/prescriptions/${prescriptionId}/invoice`, { montant });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Erreur lors de la création de la facture' };
-    }
-  },
-
-  // Supprimer une ordonnance
-  deletePrescription: async (id) => {
-    try {
-      // ✅ CORRECT: Parenthèses puis backticks À L'INTÉRIEUR
-      const response = await api.delete(`/prescriptions/${id}`);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Erreur lors de la suppression de l\'ordonnance' };
-    }
-  },
-
-  // ========== PATIENT ==========
-  
-  // Obtenir mes ordonnances (patient)
-  getMyPrescriptions: async () => {
-    try {
-      const response = await api.get('/prescriptions/my-prescriptions');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Erreur lors de la récupération des ordonnances' };
-    }
-  },
-
-  // ========== COMMUN ==========
-  
   // Obtenir une ordonnance par ID
   getPrescriptionById: async (id) => {
     try {
-      // ✅ CORRECT: Parenthèses puis backticks À L'INTÉRIEUR
       const response = await api.get(`/prescriptions/${id}`);
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Erreur lors de la récupération de l\'ordonnance' };
+      throw error.response?.data || { message: 'Erreur réseau' };
     }
   },
 
-  // Télécharger le PDF de l'ordonnance
+  // Obtenir mes ordonnances (patient)
+  getMyPrescriptions: async (params = {}) => {
+    try {
+      const response = await api.get('/prescriptions/my-prescriptions', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Erreur réseau' };
+    }
+  },
+
+  // Télécharger le PDF
   downloadPDF: async (id) => {
     try {
-      // ✅ CORRECT: Parenthèses puis backticks À L'INTÉRIEUR
       const response = await api.get(`/prescriptions/${id}/pdf`, {
         responseType: 'blob'
       });
       
-      // Créer un blob et télécharger le fichier
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
+      // Créer un URL temporaire pour le blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      
+      // Créer un élément <a> pour télécharger
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Ordonnance-${id}-${Date.now()}.pdf`;
+      link.setAttribute('download', `Ordonnance-${id}-${Date.now()}.pdf`);
+      
+      // Déclencher le téléchargement
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      
+      // Nettoyer
+      link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
       
       return { success: true };
@@ -102,16 +70,33 @@ const prescriptionService = {
     }
   },
 
-  // ========== ADMIN / RÉCEPTIONNISTE ==========
-  
-  // Marquer une ordonnance comme payée
-  markAsPaid: async (id) => {
+  // Créer une facture pour une ordonnance
+  createInvoice: async (id, montant) => {
     try {
-      // ✅ CORRECT: Parenthèses puis backticks À L'INTÉRIEUR
-      const response = await api.put(`/prescriptions/${id}/payment`);
+      const response = await api.post(`/prescriptions/${id}/invoice`, { montant });
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Erreur lors de la mise à jour du paiement' };
+      throw error.response?.data || { message: 'Erreur réseau' };
+    }
+  },
+
+  // ⭐⭐⭐ PAYER UNE ORDONNANCE ⭐⭐⭐
+  payPrescription: async (id, paymentData) => {
+    try {
+      const response = await api.post(`/prescriptions/${id}/pay`, paymentData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Erreur lors du paiement' };
+    }
+  },
+
+  // Supprimer une ordonnance
+  deletePrescription: async (id) => {
+    try {
+      const response = await api.delete(`/prescriptions/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Erreur réseau' };
     }
   }
 };
