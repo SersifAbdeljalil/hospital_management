@@ -21,8 +21,8 @@ const promisePool = pool.promise();
 const testConnection = async () => {
     try {
         const connection = await promisePool.getConnection();
-        console.log('✅ Connexion à MySQL réussie!');
-        console.log(`📊 Base de données: ${process.env.DB_NAME}`);
+        console.log('(-_-)Connexion à MySQL réussie!');
+        console.log(`(*__*)Base de données: ${process.env.DB_NAME}`);
         connection.release();
         return true;
     } catch (error) {

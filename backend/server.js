@@ -97,9 +97,9 @@ const startServer = async () => {
     
     app.listen(PORT, () => {
       console.log('=================================');
-      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-      console.log(`📡 Mode: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`- Serveur démarré sur le port ${PORT}`);
+      console.log(`- Mode: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`- URL: http://localhost:${PORT}`);
       console.log('=================================');
     });
   } catch (error) {
