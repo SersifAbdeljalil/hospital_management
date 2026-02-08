@@ -17,7 +17,7 @@ exports.createPrescription = async (req, res) => {
       duree_traitement
     } = req.body;
 
-    console.log('📦 Données reçues:', { patient_id, diagnostic, medicaments });
+    console.log('Données reçues:', { patient_id, diagnostic, medicaments });
 
     if (!patient_id) {
       return res.status(400).json({
@@ -111,7 +111,7 @@ exports.createPrescription = async (req, res) => {
         req.user.id
       );
     } catch (notifError) {
-      console.error('⚠️ Erreur notification patient:', notifError.message);
+      console.error('Erreur notification patient:', notifError.message);
     }
 
     // Récupérer l'ordonnance créée
