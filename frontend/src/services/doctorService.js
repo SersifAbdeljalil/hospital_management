@@ -4,9 +4,12 @@ const doctorService = {
   // Obtenir tous les médecins
   getAllDoctors: async (params = {}) => {
     try {
+      console.log('📞 Appel API getAllDoctors avec params:', params);
       const response = await api.get('/doctors', { params });
+      console.log('✅ Réponse API doctors:', response.data);
       return response.data;
     } catch (error) {
+      console.error('❌ Erreur API doctors:', error);
       throw error.response?.data || { message: 'Erreur réseau' };
     }
   },
@@ -72,7 +75,6 @@ const doctorService = {
   },
 
   // ⭐⭐⭐ NOUVELLES FONCTIONS - UPLOAD PHOTO ⭐⭐⭐
-
   // Upload photo de profil
   uploadProfilePhoto: async (file) => {
     try {

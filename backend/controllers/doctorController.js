@@ -5,10 +5,14 @@ const fs = require('fs');
 
 // @desc    Obtenir tous les médecins
 // @route   GET /api/doctors
-// @access  Private (admin, receptionniste)
+// @access  Private (tous les utilisateurs authentifiés)
 exports.getAllDoctors = async (req, res) => {
   try {
-    const { search, page = 1, limit = 10 } = req.query;
+    const { search, page = 1, limit = 1000, statut = 'actif' } = req.query;
+    
+    console.log('📊 GET /api/doctors appelé par:', req.user?.email, '- Role:', req.user?.role);
+    console.log('📊 Params:', { search, page, limit, statut });
+
     const offset = (page - 1) * limit;
 
     let sql = `
@@ -32,6 +36,12 @@ exports.getAllDoctors = async (req, res) => {
 
     const params = [];
 
+    // Filtrer par statut
+    if (statut && statut !== 'all') {
+      sql += ` AND statut = ?`;
+      params.push(statut);
+    }
+
     // Recherche
     if (search) {
       sql += ` AND (
@@ -46,18 +56,26 @@ exports.getAllDoctors = async (req, res) => {
 
     // Compter le total
     const countSql = sql.replace(/SELECT.*FROM/, 'SELECT COUNT(*) as total FROM');
-    const [countResult] = await query(countSql, params);
-    const total = countResult.total;
+    const countResult = await query(countSql, params);
+    const total = countResult[0]?.total || 0;
+
+    console.log('🔍 Total médecins trouvés:', total);
 
     // Pagination
-    sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    sql += ` ORDER BY nom ASC, prenom ASC LIMIT ? OFFSET ?`;
     params.push(parseInt(limit), parseInt(offset));
 
+    console.log('🔍 SQL:', sql);
+    console.log('🔍 Params:', params);
+
     const doctors = await query(sql, params);
+
+    console.log(`✅ ${doctors.length} médecin(s) renvoyé(s) au client`);
 
     res.status(200).json({
       success: true,
       data: doctors,
+      count: doctors.length,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -66,7 +84,7 @@ exports.getAllDoctors = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Erreur getAllDoctors:', error);
+    console.error('❌ Erreur getAllDoctors:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des médecins',
@@ -81,6 +99,8 @@ exports.getAllDoctors = async (req, res) => {
 exports.getDoctorById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    console.log('📊 GET /api/doctors/:id - ID:', id);
 
     const sql = `
       SELECT 
@@ -102,7 +122,8 @@ exports.getDoctorById = async (req, res) => {
       WHERE id = ? AND role = 'medecin'
     `;
 
-    const [doctor] = await query(sql, [id]);
+    const result = await query(sql, [id]);
+    const doctor = result[0];
 
     if (!doctor) {
       return res.status(404).json({
@@ -111,12 +132,14 @@ exports.getDoctorById = async (req, res) => {
       });
     }
 
+    console.log('✅ Médecin trouvé:', doctor.nom, doctor.prenom);
+
     res.status(200).json({
       success: true,
       data: doctor
     });
   } catch (error) {
-    console.error('Erreur getDoctorById:', error);
+    console.error('❌ Erreur getDoctorById:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération du médecin',
@@ -141,6 +164,8 @@ exports.createDoctor = async (req, res) => {
       specialite,
       numero_licence
     } = req.body;
+
+    console.log('📊 POST /api/doctors - Création médecin:', email);
 
     // Validation
     if (!nom || !prenom || !email || !specialite) {
@@ -184,6 +209,8 @@ exports.createDoctor = async (req, res) => {
       numero_licence
     ]);
 
+    console.log('✅ Médecin créé avec succès - ID:', result.insertId);
+
     res.status(201).json({
       success: true,
       message: 'Médecin créé avec succès',
@@ -194,7 +221,7 @@ exports.createDoctor = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Erreur createDoctor:', error);
+    console.error('❌ Erreur createDoctor:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la création du médecin',
@@ -222,9 +249,11 @@ exports.updateDoctor = async (req, res) => {
       statut
     } = req.body;
 
+    console.log('📊 PUT /api/doctors/:id - ID:', id);
+
     // Vérifier si le médecin existe
-    const [doctor] = await query('SELECT id FROM users WHERE id = ? AND role = "medecin"', [id]);
-    if (!doctor) {
+    const checkResult = await query('SELECT id FROM users WHERE id = ? AND role = ?', [id, 'medecin']);
+    if (checkResult.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Médecin non trouvé'
@@ -264,12 +293,14 @@ exports.updateDoctor = async (req, res) => {
       id
     ]);
 
+    console.log('✅ Médecin mis à jour avec succès');
+
     res.status(200).json({
       success: true,
       message: 'Médecin mis à jour avec succès'
     });
   } catch (error) {
-    console.error('Erreur updateDoctor:', error);
+    console.error('❌ Erreur updateDoctor:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du médecin',
@@ -285,9 +316,11 @@ exports.deleteDoctor = async (req, res) => {
   try {
     const { id } = req.params;
 
+    console.log('📊 DELETE /api/doctors/:id - ID:', id);
+
     // Vérifier si le médecin existe
-    const [doctor] = await query('SELECT id FROM users WHERE id = ? AND role = "medecin"', [id]);
-    if (!doctor) {
+    const checkResult = await query('SELECT id FROM users WHERE id = ? AND role = ?', [id, 'medecin']);
+    if (checkResult.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Médecin non trouvé'
@@ -295,12 +328,12 @@ exports.deleteDoctor = async (req, res) => {
     }
 
     // Vérifier s'il a des consultations en cours
-    const [consultations] = await query(
-      'SELECT COUNT(*) as count FROM consultations WHERE medecin_id = ? AND statut = "en_cours"',
-      [id]
+    const consultationsResult = await query(
+      'SELECT COUNT(*) as count FROM consultations WHERE medecin_id = ? AND statut = ?',
+      [id, 'en_cours']
     );
 
-    if (consultations.count > 0) {
+    if (consultationsResult[0]?.count > 0) {
       return res.status(400).json({
         success: false,
         message: 'Impossible de supprimer ce médecin car il a des consultations en cours'
@@ -310,12 +343,14 @@ exports.deleteDoctor = async (req, res) => {
     // Supprimer le médecin
     await query('DELETE FROM users WHERE id = ?', [id]);
 
+    console.log('✅ Médecin supprimé avec succès');
+
     res.status(200).json({
       success: true,
       message: 'Médecin supprimé avec succès'
     });
   } catch (error) {
-    console.error('Erreur deleteDoctor:', error);
+    console.error('❌ Erreur deleteDoctor:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression du médecin',
@@ -329,44 +364,49 @@ exports.deleteDoctor = async (req, res) => {
 // @access  Private (admin)
 exports.getDoctorStats = async (req, res) => {
   try {
+    console.log('📊 GET /api/doctors/stats');
+
     // Total médecins
-    const [totalResult] = await query('SELECT COUNT(*) as total FROM users WHERE role = "medecin"');
-    const total = totalResult.total;
+    const totalResult = await query('SELECT COUNT(*) as total FROM users WHERE role = ?', ['medecin']);
+    const total = totalResult[0]?.total || 0;
 
     // Par statut
     const statusSql = `
       SELECT statut, COUNT(*) as count
       FROM users
-      WHERE role = 'medecin'
+      WHERE role = ?
       GROUP BY statut
     `;
-    const byStatus = await query(statusSql);
+    const byStatus = await query(statusSql, ['medecin']);
 
     // Par spécialité
     const specialitySql = `
       SELECT specialite, COUNT(*) as count
       FROM users
-      WHERE role = 'medecin' AND specialite IS NOT NULL
+      WHERE role = ? AND specialite IS NOT NULL
       GROUP BY specialite
     `;
-    const bySpecialty = await query(specialitySql);
+    const bySpecialty = await query(specialitySql, ['medecin']);
 
     // Médecins actifs
-    const [activeResult] = await query(
-      'SELECT COUNT(*) as count FROM users WHERE role = "medecin" AND statut = "actif"'
+    const activeResult = await query(
+      'SELECT COUNT(*) as count FROM users WHERE role = ? AND statut = ?',
+      ['medecin', 'actif']
     );
+
+    console.log('✅ Stats récupérées');
 
     res.status(200).json({
       success: true,
       data: {
         total,
-        active: activeResult.count,
+        active: activeResult[0]?.count || 0,
         byStatus,
         bySpecialty
       }
     });
   } catch (error) {
-    console.error('Erreur getDoctorStats:', error);
+    console.error('❌ Erreur getDoctorStats:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des statistiques',
@@ -390,11 +430,13 @@ exports.updateDoctorProfile = async (req, res) => {
       numero_licence
     } = req.body;
 
+    console.log('📊 PUT /api/doctors/profile - User ID:', userId);
+
     const sql = `
       UPDATE users 
       SET nom = ?, prenom = ?, telephone = ?, adresse = ?,
           specialite = ?, numero_licence = ?
-      WHERE id = ? AND role = 'medecin'
+      WHERE id = ? AND role = ?
     `;
 
     await query(sql, [
@@ -404,15 +446,18 @@ exports.updateDoctorProfile = async (req, res) => {
       adresse,
       specialite,
       numero_licence,
-      userId
+      userId,
+      'medecin'
     ]);
+
+    console.log('✅ Profil médecin mis à jour');
 
     res.status(200).json({
       success: true,
       message: 'Profil mis à jour avec succès'
     });
   } catch (error) {
-    console.error('Erreur updateDoctorProfile:', error);
+    console.error('❌ Erreur updateDoctorProfile:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du profil',
@@ -438,18 +483,23 @@ exports.uploadProfilePhoto = async (req, res) => {
 
     const userId = req.user.id;
 
+    console.log('📊 POST /api/doctors/profile/photo - User ID:', userId);
+    console.log('📁 Fichier uploadé:', req.file.filename);
+
     // Récupérer l'ancien chemin de la photo
-    const [user] = await query(
-      'SELECT photo_profil FROM users WHERE id = ? AND role = "medecin"',
-      [userId]
+    const userResult = await query(
+      'SELECT photo_profil FROM users WHERE id = ? AND role = ?',
+      [userId, 'medecin']
     );
 
-    if (!user) {
+    if (userResult.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Médecin non trouvé'
       });
     }
+
+    const user = userResult[0];
 
     // Supprimer l'ancienne photo si elle existe
     if (user.photo_profil) {
@@ -459,7 +509,7 @@ exports.uploadProfilePhoto = async (req, res) => {
           fs.unlinkSync(oldPhotoPath);
           console.log('✅ Ancienne photo supprimée');
         } catch (err) {
-          console.error('Erreur suppression ancienne photo:', err);
+          console.error('⚠️ Erreur suppression ancienne photo:', err);
         }
       }
     }
@@ -473,6 +523,8 @@ exports.uploadProfilePhoto = async (req, res) => {
       [photoPath, userId]
     );
 
+    console.log('✅ Photo de profil mise à jour');
+
     res.status(200).json({
       success: true,
       message: 'Photo de profil mise à jour avec succès',
@@ -481,7 +533,7 @@ exports.uploadProfilePhoto = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Erreur uploadProfilePhoto:', error);
+    console.error('❌ Erreur uploadProfilePhoto:', error);
     
     // Supprimer le fichier uploadé en cas d'erreur
     if (req.file) {
@@ -506,18 +558,22 @@ exports.deleteProfilePhoto = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    console.log('📊 DELETE /api/doctors/profile/photo - User ID:', userId);
+
     // Récupérer le chemin de la photo
-    const [user] = await query(
-      'SELECT photo_profil FROM users WHERE id = ? AND role = "medecin"',
-      [userId]
+    const userResult = await query(
+      'SELECT photo_profil FROM users WHERE id = ? AND role = ?',
+      [userId, 'medecin']
     );
 
-    if (!user) {
+    if (userResult.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Médecin non trouvé'
       });
     }
+
+    const user = userResult[0];
 
     if (!user.photo_profil) {
       return res.status(400).json({
@@ -533,7 +589,7 @@ exports.deleteProfilePhoto = async (req, res) => {
         fs.unlinkSync(photoPath);
         console.log('✅ Photo supprimée du système de fichiers');
       } catch (err) {
-        console.error('Erreur suppression photo:', err);
+        console.error('⚠️ Erreur suppression photo:', err);
       }
     }
 
@@ -543,12 +599,14 @@ exports.deleteProfilePhoto = async (req, res) => {
       [userId]
     );
 
+    console.log('✅ Photo de profil supprimée');
+
     res.status(200).json({
       success: true,
       message: 'Photo de profil supprimée avec succès'
     });
   } catch (error) {
-    console.error('Erreur deleteProfilePhoto:', error);
+    console.error('❌ Erreur deleteProfilePhoto:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de la photo',

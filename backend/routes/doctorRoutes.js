@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
-
 // Importer le middleware upload
 const upload = require('../middlewares/uploadMiddleware');
 
@@ -50,12 +49,16 @@ router.put('/profile', authorize('medecin'), updateDoctorProfile);
 // ROUTES GÉNÉRALES - DOIVENT ÊTRE APRÈS LES ROUTES SPÉCIFIQUES
 // =====================================================
 
-// Liste et création
-router.get('/', authorize('admin', 'receptionniste'), getAllDoctors);
+// ✅ CORRECTION: Permettre à TOUS les utilisateurs authentifiés de voir la liste des médecins
+// (y compris les patients qui doivent choisir un médecin pour prendre rendez-vous)
+router.get('/', getAllDoctors); // Pas de authorize ici - accessible à tous les utilisateurs authentifiés !
+
+// Création réservée à l'admin
 router.post('/', authorize('admin'), createDoctor);
 
 // Routes avec paramètre :id (DOIVENT ÊTRE EN DERNIER)
-router.get('/:id', authorize('admin', 'receptionniste', 'medecin'), getDoctorById);
+router.get('/:id', getDoctorById); // ✅ Accessible à tous les utilisateurs authentifiés
+
 router.put('/:id', authorize('admin'), updateDoctor);
 router.delete('/:id', authorize('admin'), deleteDoctor);
 

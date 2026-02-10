@@ -14,7 +14,6 @@ const appointmentService = {
   // Obtenir un rendez-vous par ID
   getAppointmentById: async (id) => {
     try {
-      // ✅ CORRECTION: Utiliser des parenthèses normales avec template string
       const response = await api.get(`/appointments/${id}`);
       return response.data;
     } catch (error) {
@@ -35,7 +34,6 @@ const appointmentService = {
   // Mettre à jour un rendez-vous
   updateAppointment: async (id, appointmentData) => {
     try {
-      // ✅ CORRECTION: Template string correct
       const response = await api.put(`/appointments/${id}`, appointmentData);
       return response.data;
     } catch (error) {
@@ -46,7 +44,6 @@ const appointmentService = {
   // Annuler un rendez-vous
   cancelAppointment: async (id) => {
     try {
-      // ✅ CORRECTION: Template string correct
       const response = await api.delete(`/appointments/${id}`);
       return response.data;
     } catch (error) {
@@ -57,7 +54,6 @@ const appointmentService = {
   // Obtenir les disponibilités d'un médecin
   getAvailability: async (medecin_id, date) => {
     try {
-      // ✅ CORRECTION: Template string correct
       const response = await api.get(`/appointments/availability/${medecin_id}`, {
         params: { date }
       });
