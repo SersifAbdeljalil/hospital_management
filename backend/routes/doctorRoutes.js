@@ -42,13 +42,11 @@ router.delete(
   deleteProfilePhoto
 );
 
-// Profil du médecin (mise à jour par le médecin lui-même)
 router.put('/profile', authorize('medecin'), updateDoctorProfile);
 
 
 router.get('/', getAllDoctors); 
 
-// Création réservée à l'admin
 router.post('/', authorize('admin'), createDoctor);
 
 
