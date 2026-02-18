@@ -45,7 +45,7 @@ router.delete(
 router.put('/profile', authorize('medecin'), updateDoctorProfile);
 
 
-router.get('/', getAllDoctors); // Pas de authorize ici - accessible à tous les utilisateurs authentifiés !
+router.get('/', getAllDoctors); 
 
 // Création réservée à l'admin
 router.post('/', authorize('admin'), createDoctor);
