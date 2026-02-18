@@ -45,19 +45,14 @@ router.delete(
 // Profil du médecin (mise à jour par le médecin lui-même)
 router.put('/profile', authorize('medecin'), updateDoctorProfile);
 
-// =====================================================
-// ROUTES GÉNÉRALES - DOIVENT ÊTRE APRÈS LES ROUTES SPÉCIFIQUES
-// =====================================================
 
-// ✅ CORRECTION: Permettre à TOUS les utilisateurs authentifiés de voir la liste des médecins
-// (y compris les patients qui doivent choisir un médecin pour prendre rendez-vous)
 router.get('/', getAllDoctors); // Pas de authorize ici - accessible à tous les utilisateurs authentifiés !
 
 // Création réservée à l'admin
 router.post('/', authorize('admin'), createDoctor);
 
-// Routes avec paramètre :id (DOIVENT ÊTRE EN DERNIER)
-router.get('/:id', getDoctorById); // ✅ Accessible à tous les utilisateurs authentifiés
+
+router.get('/:id', getDoctorById); 
 
 router.put('/:id', authorize('admin'), updateDoctor);
 router.delete('/:id', authorize('admin'), deleteDoctor);
