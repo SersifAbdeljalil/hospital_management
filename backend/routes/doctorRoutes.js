@@ -5,7 +5,6 @@ const { authorize } = require('../middlewares/roleMiddleware');
 // Importer le middleware upload
 const upload = require('../middlewares/uploadMiddleware');
 
-// Importer toutes les fonctions du controller
 const {
   getAllDoctors,
   getDoctorById,
