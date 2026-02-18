@@ -47,7 +47,6 @@ router.put('/profile', authorize('medecin'), updateDoctorProfile);
 
 router.get('/', getAllDoctors); 
 
-// Création réservée à l'admin
 router.post('/', authorize('admin'), createDoctor);
 
 
