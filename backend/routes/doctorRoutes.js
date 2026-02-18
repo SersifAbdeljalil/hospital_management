@@ -2,10 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
-// Importer le middleware upload
 const upload = require('../middlewares/uploadMiddleware');
 
-// Importer toutes les fonctions du controller
 const {
   getAllDoctors,
   getDoctorById,
@@ -18,7 +16,6 @@ const {
   deleteProfilePhoto
 } = require('../controllers/doctorController');
 
-// Toutes les routes nécessitent une authentification
 router.use(protect);
 
 // =====================================================
